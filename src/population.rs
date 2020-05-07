@@ -23,7 +23,7 @@ impl Population {
 
         for _i in 0..pop_size {
             let mut net = ANN::new(input_len, output_len, act_func.clone());
-            net.add_layer(6, Activation::Relu);
+            // net.add_layer(6, act_func.clone());
             population.push(rand_genome(net));
         }
 
@@ -43,7 +43,7 @@ impl Population {
 
         let mut best_genome = self.individuals[0].clone();
         for i in 0..self.individuals.len() {
-            let fit = self.env.evaluate(&self.individuals[i].network);
+            let fit = self.env.evaluate(&mut self.individuals[i].network);
             self.individuals[i].update_fitness(fit);
 
             if self.individuals[i].fitness > best_genome.fitness {

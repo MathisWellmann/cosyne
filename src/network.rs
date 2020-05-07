@@ -44,7 +44,16 @@ impl ANN {
 
     pub fn enc_fitness(&mut self, fit: f64) -> Vec<f64> {
         // TODO:
-        return Vec::new()
+        vec![1.0; self.genes().len()]
+    }
+
+    // returns the genes representing the network
+    pub fn genes(&self) -> Vec<f64> {
+        let mut out: Vec<f64> = Vec::new();
+        for l in &self.layers {
+            out.append(&mut l.genes())
+        }
+        out
     }
     
 }
@@ -93,5 +102,19 @@ mod tests {
         let output = nn.forward(input);
 
         assert_eq!(Matrix::new(1, 1, output), Matrix::new(1, 1, vec![9.0]));
+    }
+
+    #[test]
+    fn network_genes() {
+        let mut nn = ANN::new(3, 1, Activation::Relu);
+
+        let genes = nn.genes();
+
+        assert_eq!(genes.len(), 4);
+
+        nn.add_layer(3, Activation::Relu);
+        let genes = nn.genes();
+
+        assert_eq!(genes.len(), 16);
     }
 }

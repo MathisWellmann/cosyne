@@ -6,4 +6,4 @@ pub mod environment;
 pub mod network;
 mod genome;
 mod layer;
-mod activations;
+pub mod activations;

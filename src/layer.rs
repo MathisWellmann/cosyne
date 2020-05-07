@@ -1,6 +1,7 @@
 use rulinalg::matrix::{BaseMatrix, BaseMatrixMut, Matrix};
 use rand::{thread_rng, Rng};
-use crate::activations::{Activation, relu, soft_plus, soft_sign, tanh};
+use crate::activations::{Activation, relu, soft_plus, soft_sign, tanh, relu_deriv, soft_plus_deriv, tanh_deriv, soft_sign_deriv};
+use rand_distr::{Distribution, Normal};
 
 #[derive(Debug, Clone)]
 pub struct Layer {
@@ -11,6 +12,9 @@ pub struct Layer {
     biases: Matrix<f64>,
     act: Matrix<f64>,  // activations
     act_func: fn(f64) -> f64,
+    act_deriv_func: fn(f64) -> f64,
+    net: Matrix<f64>,
+    net_deriv: Matrix<f64>,
 }
 
 impl Layer {
@@ -24,6 +28,12 @@ impl Layer {
             Activation::SoftSign => soft_sign,
             Activation::Tanh => tanh,
         };
+        let act_deriv_func = match activation {
+            Activation::Relu => relu_deriv,
+            Activation::SoftPlus => soft_plus_deriv,
+            Activation::SoftSign => soft_sign_deriv,
+            Activation::Tanh => tanh_deriv,
+        };
         return Layer{
             input_len,
             output_len,
@@ -32,23 +42,42 @@ impl Layer {
             biases,
             act: Matrix::new(input_len, 1, vec![0.0; input_len]),
             act_func,
+            act_deriv_func,
+            net: Matrix::new(output_len, 1, vec![0.0; output_len]),
+            net_deriv: Matrix::new(output_len, 1, vec![0.0; output_len]),
         }
     }
 
     // genes maps the weight and biases in Matrices to flat vector
     pub fn genes(&self) -> Vec<f64> {
-        // TODO:
-        return Vec::new()
+        let mut out: Vec<f64> = Vec::new();
+        out.append(&mut self.weights.clone().into_vec());
+        out.append(&mut self.biases.clone().into_vec());
+        out
     }
 
     // enc_fit encodes the fitness to their respective weights and biases
-    pub fn enc_fit(&mut self, fit: f64) {
-        // TODO:
+    pub fn enc_fit(&mut self, fit: f64) -> Vec<f64> {
+        // let fit_wrt_net = &self.net_deriv * fit;
+        //
+        // let bias_part = &self.biases.elediv(&self.net);
+        // let fit_wrt_bias = fit_wrt_net * bias_part;
+        //
+        // let fit_wrt_weights = fit_wrt_net * ();
+        // println!("fit_wrt_weights: {:?}", fit_wrt_weights);
+        //
+        // let mut out: Vec<f64> = Vec::new();
+        // out.append(&mut fit_wrt_bias.into_vec());
+        // out.append(&mut fit_wrt_weights.into_vec());
+
+        vec![1.0; self.biases.rows() + self.weights.cols() * self.weights.rows()]
     }
 
-    pub fn forward(&self, m: &Matrix<f64>) -> Matrix<f64> {
-        let res = &self.weights * m + &self.biases;
-        return res.apply(&self.act_func);
+    pub fn forward(&mut self, m: &Matrix<f64>) -> Matrix<f64> {
+        let mut net = &self.weights * m + &self.biases;
+        // self.net = net.clone();
+        // self.net_deriv = net.clone().apply(&self.act_deriv_func);
+        return net.apply(&self.act_func);
     }
 
     pub fn set_weights(&mut self, w: Matrix<f64>) {
@@ -82,6 +111,16 @@ fn rand_vec(length: usize) -> Vec<f64> {
     let mut rng = thread_rng();
     for i in 0..length {
         out[i] = rng.gen::<f64>();
+    }
+    out
+}
+
+fn rand_vec_normal(length: usize) -> Vec<f64> {
+    let mut d = Normal::new(0.0, 0.4).unwrap();
+    let mut rng = rand::thread_rng();
+    let mut out: Vec<f64> = vec![0.0; length];
+    for i in 0..length {
+        out[i] = d.sample(&mut rng);
     }
     out
 }
@@ -143,5 +182,33 @@ mod tests {
 
         let b: Matrix<f64> = Matrix::new(1, 1, vec![0.0]);
         l.set_biases(b);
+    }
+
+    #[test]
+    fn layer_enc_fit() {
+        let mut l = Layer::new(3, 1, Activation::Relu);
+
+        // set weights and biases of layer
+        let w: Matrix<f64> = Matrix::new(1, 3, vec![1.0; 3]);
+        l.set_weights(w);
+        let b: Matrix<f64> = Matrix::new(1, 1, vec![1.0]);
+        l.set_biases(b);
+
+        // do forward pass so that derived results are set
+        let inputs: Matrix<f64> = Matrix::new(3, 1, vec![1.0;3]);
+        l.forward(&inputs);
+
+        let fit = 0.1;
+        let enc_fit = l.enc_fit(fit);
+
+        assert_eq!(enc_fit, vec![0.025])
+    }
+
+    #[test]
+    fn layer_genes() {
+        let l = Layer::new(3, 1, Activation::Relu);
+
+        let genes = l.genes();
+        assert_eq!(genes.len(), 4);
     }
 }

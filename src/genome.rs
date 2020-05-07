@@ -23,21 +23,13 @@ pub struct Genome {
 
 // rand_genome returns a randomly initialized genome
 pub fn rand_genome(network: ANN) -> Genome {
-    let mut d = Normal::new(0.0, 0.4).unwrap();
-    let mut rng = rand::thread_rng();
-
-    // TODO:
-    let size = 10;
-    let mut genes: Vec<f64> = vec![0.0; size];
-    for i in 0..size {
-        genes[i] = d.sample(&mut rng);
-    };
-
+    let genes = network.genes();
+    let len_genes = genes.len();
     return Genome{
         genes,
         network,
         fitness: 0.0,
-        fit_enc: vec![0.0; size],
+        fit_enc: vec![0.0; len_genes],
         fit_total: 0.0,
         fit_min: 0.0,
         fit_max: 0.0,
