@@ -37,4 +37,8 @@ impl Environment for XorEnvironment {
 
         (4.0 - distance).powi(2)
     }
+
+    fn reset(&mut self) {
+
+    }
 }

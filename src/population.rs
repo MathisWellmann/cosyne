@@ -43,6 +43,7 @@ impl Population {
 
         let mut best_genome = self.individuals[0].clone();
         for i in 0..self.individuals.len() {
+            self.env.reset();
             let fit = self.env.evaluate(&mut self.individuals[i].network);
             self.individuals[i].update_fitness(fit);
 
