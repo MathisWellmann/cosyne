@@ -10,7 +10,8 @@ fn main() {
     let output_len = 2;
     let activation = Activation::Relu;
     let env = Box::new(XorEnvironment{});
-    let mut pop = Population::new(env, pop_size, input_len, output_len, activation);
+    let mut nn = ANN::new(input_len, output_len, activation);
+    let mut pop = Population::new(env, pop_size, nn);
 
     for g in 0..10 {
         let best = pop.generation();

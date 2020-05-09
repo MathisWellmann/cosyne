@@ -55,6 +55,19 @@ impl ANN {
         }
         out
     }
+
+    // randomize returns a new randomized instance of ANN
+    pub fn randomize(&self) -> ANN {
+        let mut layers: Vec<Layer> = Vec::new();
+        for l in &self.layers {
+            layers.push(Layer::new(l.input_len(), l.output_len(), l.activation()))
+        }
+        return ANN {
+            num_inputs: self.num_inputs,
+            num_outputs: self.num_outputs,
+            layers
+        }
+    }
     
 }
 

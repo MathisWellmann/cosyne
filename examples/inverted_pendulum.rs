@@ -10,7 +10,9 @@ fn main() {
     let output_len = 2;
     let activation = Activation::Relu;
     let env = Box::new(InvertedPendulum::new());
-    let mut pop = Population::new(env, pop_size, input_len, output_len, activation);
+    let mut nn = ANN::new(input_len, output_len, activation.clone());
+    nn.add_layer(input_len, activation);
+    let mut pop = Population::new(env, pop_size, nn);
 
     for g in 0..100 {
         let best = pop.generation();
@@ -35,7 +37,7 @@ impl InvertedPendulum {
         }
     }
 
-    pub fn apply_control_input(&mut self, force: f64, time_delta: f64, x_t_m2: f64, theta_dot: f64, theta_t_m2: f64, prev_time_delta: f64) {
+    pub fn apply_control_input(&mut self, force: f64, x_t_m2: f64, theta_dot: f64, theta_t_m2: f64) {
         let c = &self.cart;
         let p = &self.pendulum;
 
@@ -48,18 +50,15 @@ impl InvertedPendulum {
         let x_double_pot = ((p.ball_mass * self.g * theta_sin * theta_cos)
             - (p.ball_mass * p.length * theta_sin * theta_dot.powi(2))
             + force / (c.mass + p.ball_mass * theta_sin.powi(2)));
-        self.cart.x += (time_delta.powi(2) * x_double_pot)
-            + (((c.x - x_t_m2) * time_delta) / prev_time_delta);
-        self.pendulum.theta += ((time_delta.powi(2) * theta_double_dot)
-            + (((p.theta - theta_t_m2) * time_delta) / prev_time_delta))
+        self.cart.x += x_double_pot
+            + (c.x - x_t_m2);
+        self.pendulum.theta += theta_double_dot
+            + p.theta - theta_t_m2;
     }
 }
 
 impl Environment for InvertedPendulum {
     fn evaluate(&mut self, nn: &mut ANN) -> f64 {
-        let mut prev_ts = Instant::now();
-        let end_time = prev_ts + Duration::from_secs(self.simulation_time);
-
         let mut fitness: f64 = 0.0;
         let mut theta_dot = 0.0;
         let mut theta_t_m1 = self.pendulum.theta;
@@ -67,25 +66,20 @@ impl Environment for InvertedPendulum {
         let mut x_t_m1 = self.cart.x;
         let mut x_t_m2 = self.cart.x;
         let mut prev_err = self.pendulum.find_error();
-        let mut prev_time_delta: Duration = Duration::new(0, 0);
-        for i in 0..10_000 {
-            let curr_ts: Instant = Instant::now();
-            let time_delta: Duration = curr_ts - prev_ts;
+        for i in 0..1000*self.simulation_time {  // runs on millisecond basis
             let err: f64 = self.pendulum.find_error();
-            if prev_time_delta.as_millis() != 0 {
-                theta_dot = (theta_t_m1 - theta_t_m2) / prev_time_delta.as_millis() as f64;
-                let x_dot = (x_t_m1 - x_t_m2) / prev_time_delta.as_millis() as f64;
+            if i > 0 {
+                theta_dot = (theta_t_m1 - theta_t_m2);
+                let x_dot = (x_t_m1 - x_t_m2);
 
                 // get control input from nn
                 let inputs = vec![theta_dot, x_dot];
                 let output = nn.forward(inputs);
                 let force = output[0];
 
-                self.apply_control_input(force, time_delta.as_millis() as f64, x_t_m2, theta_dot, theta_t_m2, prev_time_delta.as_millis() as f64);
+                self.apply_control_input(force, x_t_m2, theta_dot, theta_t_m2);
             }
 
-            prev_time_delta = time_delta;
-            prev_ts = curr_ts;
             prev_err = err;
             theta_t_m2 = theta_t_m1;
             theta_t_m1 = self.pendulum.theta;

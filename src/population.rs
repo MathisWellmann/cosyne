@@ -18,13 +18,12 @@ pub struct Population {
 }
 
 impl Population {
-    pub fn new(env: Box<dyn Environment>, pop_size: usize, input_len: usize, output_len: usize, act_func: Activation) -> Population {
+    pub fn new(env: Box<dyn Environment>, pop_size: usize, nn: ANN) -> Population {
         let mut population = Vec::new();
 
         for _i in 0..pop_size {
-            let mut net = ANN::new(input_len, output_len, act_func.clone());
             // net.add_layer(6, act_func.clone());
-            population.push(rand_genome(net));
+            population.push(rand_genome(nn.randomize()));
         }
 
         return Population{
