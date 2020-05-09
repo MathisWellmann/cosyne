@@ -20,8 +20,8 @@ pub struct Layer {
 impl Layer {
     // new returns a new Layer with given input and output length
     pub fn new(input_len: usize, output_len: usize, activation: Activation) -> Layer {
-        let weights = Matrix::new(output_len, input_len, rand_vec(input_len * output_len));
-        let biases = Matrix::new(output_len, 1, rand_vec(output_len));
+        let weights = Matrix::new(output_len, input_len, rand_vec_normal(input_len * output_len));
+        let biases = Matrix::new(output_len, 1, rand_vec_normal(output_len));
         let act_func = match activation{
             Activation::Relu => relu,
             Activation::SoftPlus => soft_plus,
