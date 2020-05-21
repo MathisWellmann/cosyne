@@ -43,7 +43,7 @@ impl ANN {
     }
 
     pub fn enc_fitness(&mut self, fit: f64) -> Vec<f64> {
-        // TODO:
+        // TODO: enc_fitness
         vec![1.0; self.genes().len()]
     }
 
@@ -66,6 +66,16 @@ impl ANN {
             num_inputs: self.num_inputs,
             num_outputs: self.num_outputs,
             layers
+        }
+    }
+
+    // update the network weights and biases with new genes
+    pub fn set_genes(&mut self, genes: &Vec<f64>) {
+        let mut start: usize = 0;
+        for l in &mut self.layers {
+            let end = start + l.gene_len();
+            l.set_genes(&genes[start..end].to_vec());
+            start += l.gene_len();
         }
     }
     
@@ -129,5 +139,15 @@ mod tests {
         let genes = nn.genes();
 
         assert_eq!(genes.len(), 16);
+    }
+
+    #[test]
+    fn network_set_genes() {
+        let mut nn = ANN::new(3, 1, Activation::Relu);
+        nn.add_layer(3, Activation::Relu);
+
+        let genes = vec![1.0; 16];
+        nn.set_genes(&genes);
+        assert_eq!(nn.genes(), genes);
     }
 }

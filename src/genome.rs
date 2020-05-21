@@ -96,6 +96,9 @@ impl Genome {
         }
         // swap first gene with last gene both marked for permutation
         self.genes[init_index] = temp;
+
+        // generate the new network from genes
+        self.network.set_genes(&self.genes);
     }
 
     pub fn kill_and_replace(&mut self, o: &Vec<f64>) {

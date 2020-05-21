@@ -22,7 +22,6 @@ impl Population {
         let mut population = Vec::new();
 
         for _i in 0..pop_size {
-            // net.add_layer(6, act_func.clone());
             population.push(rand_genome(nn.randomize()));
         }
 
@@ -46,7 +45,7 @@ impl Population {
             let fit = self.env.evaluate(&mut self.individuals[i].network);
             self.individuals[i].update_fitness(fit);
 
-            if self.individuals[i].fitness > best_genome.fitness {
+            if fit > best_genome.fitness {
                 best_genome = self.individuals[i].clone()
             }
 
@@ -60,7 +59,6 @@ impl Population {
 
     // offspring creates new individuals from top 25% of population
     fn spawn_offspring(&mut self) {
-
         let mut fs: Vec<f64> = Vec::new();
         for i in 0..self.individuals.len() {
             fs.push(self.individuals[i].fitness);
@@ -75,6 +73,8 @@ impl Population {
                 best_indices.push(i);
             }
         }
+
+        self.offspring.clear();
 
         let mut rng = rand::thread_rng();
         // fill offspring population with new children

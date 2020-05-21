@@ -12,3 +12,6 @@ rand_distr = "0.2.2"
 log = "0.4.8"
 pretty_env_logger = "0.4.0"
 rulinalg = "0.3.4"
+
+[dev-dependencies]
+round = "0.1.0"
