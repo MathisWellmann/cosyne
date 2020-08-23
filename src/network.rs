@@ -42,7 +42,7 @@ impl ANN {
         return prev_output.into_vec()
     }
 
-    pub fn enc_fitness(&mut self, fit: f64) -> Vec<f64> {
+    pub fn enc_fitness(&mut self, _fit: f64) -> Vec<f64> {
         // TODO: enc_fitness
         vec![1.0; self.genes().len()]
     }

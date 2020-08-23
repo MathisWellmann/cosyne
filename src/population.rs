@@ -5,9 +5,7 @@ use self::rand::Rng;
 use self::rand_distr::{Normal, Distribution};
 use crate::genome::{Genome, rand_genome};
 use crate::environment::Environment;
-use crate::activations::Activation;
 use crate::network::ANN;
-use crate::layer::Layer;
 
 pub struct Population {
     env: Box<dyn Environment>,
@@ -113,7 +111,7 @@ impl Population {
 
     // assign a random value to child with probability (inplace)
     fn mutate(&self, mut child: Vec<f64>) -> Vec<f64> {
-        let mut n = Normal::new(0.0, 0.4).unwrap();
+        let n = Normal::new(0.0, 0.4).unwrap();
         let mut rng = rand::thread_rng();
         for i in 0..child.len() {
             if n.sample(&mut rng) < self.mutation_prob {

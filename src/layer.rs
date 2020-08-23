@@ -61,7 +61,9 @@ impl Layer {
     }
 
     // enc_fit encodes the fitness to their respective weights and biases
-    pub fn enc_fit(&mut self, fit: f64) -> Vec<f64> {
+    pub fn enc_fit(&mut self, _fit: f64) -> Vec<f64> {
+        // TODO: layer: enc_fit
+
         // let fit_wrt_net = &self.net_deriv * fit;
         //
         // let bias_part = &self.biases.elediv(&self.net);
@@ -78,7 +80,7 @@ impl Layer {
     }
 
     pub fn forward(&mut self, m: &Matrix<f64>) -> Matrix<f64> {
-        let mut net = &self.weights * m + &self.biases;
+        let net = &self.weights * m + &self.biases;
         // self.net = net.clone();
         // self.net_deriv = net.clone().apply(&self.act_deriv_func);
         return net.apply(&self.act_func);
@@ -134,7 +136,7 @@ fn rand_vec(length: usize) -> Vec<f64> {
 }
 
 fn rand_vec_normal(length: usize) -> Vec<f64> {
-    let mut d = Normal::new(0.0, 0.4).unwrap();
+    let d = Normal::new(0.0, 0.4).unwrap();
     let mut rng = rand::thread_rng();
     let mut out: Vec<f64> = vec![0.0; length];
     for i in 0..length {

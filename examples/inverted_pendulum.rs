@@ -31,7 +31,7 @@ impl InvertedPendulum {
     pub fn new() -> InvertedPendulum {
         return InvertedPendulum{
             g: 9.81,
-            cart: Cart::new(500.0, 5.0, 1000.0),
+            cart: Cart::new(500.0, 5.0),
             pendulum: Pendulum::new(1.0, 1.0, 1.0),
             simulation_time: 35,
         }
@@ -91,7 +91,7 @@ impl Environment for InvertedPendulum {
     }
 
     fn reset(&mut self) {
-        self.cart = Cart::new(500.0, 5.0, 1000.0);
+        self.cart = Cart::new(500.0, 5.0);
         self.pendulum = Pendulum::new(1.0, 1.0, 1.0);
     }
 }
@@ -99,15 +99,13 @@ impl Environment for InvertedPendulum {
 struct Cart{
     x: f64,
     mass: f64,
-    world_size: f64,
 }
 
 impl Cart {
-    pub fn new(x: f64, mass: f64, world_size: f64) -> Cart {
+    pub fn new(x: f64, mass: f64) -> Cart {
         return Cart{
             x,
             mass,
-            world_size,
         }
     }
 }

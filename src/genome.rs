@@ -1,14 +1,9 @@
 extern crate rand;
-extern crate rand_distr;
-extern crate log;
 
 use self::rand::{thread_rng, Rng};
-use self::rand_distr::{Normal, Distribution};
-use self::log::{warn};
-
 use crate::population::sort_vec;
 use crate::network::ANN;
-use rulinalg::matrix::Matrix;
+
 
 #[derive(Debug, Clone)]
 pub struct Genome {
