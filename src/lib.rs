@@ -1,8 +1,18 @@
-pub mod population;
-pub mod environment;
-pub mod network;
-pub mod genome;
-mod layer;
-pub mod activations;
+#[macro_use] extern crate log;
+extern crate pretty_env_logger;
 
-// TODO: pub use
+mod population;
+mod environment;
+mod network;
+mod genome;
+mod layer;
+mod cosyne;
+mod activations;
+
+pub use genome::Genome;
+pub use activations::Activation;
+pub use cosyne::{Cosyne, Config};
+pub use environment::Environment;
+pub use network::ANN;
+
+pub(crate) use population::Population;

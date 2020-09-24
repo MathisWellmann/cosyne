@@ -12,11 +12,7 @@ use std::path::Path;
 use sdl2::surface;
 use std::time::Duration;
 use std::thread;
-use cosyne::activations::Activation;
-use cosyne::network::ANN;
-use cosyne::population::Population;
-use cosyne::environment::Environment;
-use cosyne::genome::Genome;
+use cosyne::{Config, Activation, Cosyne, ANN, Environment};
 
 
 const MAX_STEP: usize = 50_000;
@@ -219,8 +215,6 @@ impl Environment for CartPoleEnvironment {
         }
         cart.score as f64
     }
-
-    fn reset(&mut self) {}
 }
 
 fn main() {
@@ -288,24 +282,17 @@ fn render_champion(mut champion: ANN) {
 }
 
 fn cart_pole_feed_forward() {
-    let pop_size: usize = 100;
-    let input_len: usize = 4;
-    let output_len: usize = 1;
     let activation = Activation::Tanh;
+    let config = Config::new_fixed_activation(1000, activation);
     let env = Box::new(CartPoleEnvironment{});
-    let mut nn = ANN::new(input_len, output_len, activation);
+    let mut nn = ANN::new(4, 1, activation);
     nn.add_layer(4, activation);
-    let mut pop = Population::new(env, pop_size, nn);
+    let mut cosyne = Cosyne::new(env, nn, config);
+    let champion = cosyne.optimize(100);
+    println!("champion: {:?}", champion);
 
-    let mut champion: Option<Genome> = None;
-    for g in 0..100 {
-        let best = pop.generation();
-        println!("gen {} best fitness: {}", g, best.fitness);
-        champion = Some(best);
-    }
-
-    let genes = champion.unwrap().genes;
-    let mut net = ANN::new(input_len, output_len, activation);
+    let genes = champion.genes;
+    let mut net = ANN::new(4, 1, activation);
     net.add_layer(4, activation);
     net.set_genes(&genes);
     render_champion(net);
