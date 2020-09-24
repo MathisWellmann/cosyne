@@ -3,7 +3,7 @@ extern crate rand_distr;
 
 use self::rand::Rng;
 use self::rand_distr::{Normal, Distribution};
-use crate::genome::{Genome, rand_genome};
+use crate::genome::{Genome};
 use crate::environment::Environment;
 use crate::network::ANN;
 
@@ -20,7 +20,7 @@ impl Population {
         let mut population = Vec::new();
 
         for _i in 0..pop_size {
-            population.push(rand_genome(nn.randomize()));
+            population.push(Genome::new(nn.randomize()));
         }
 
         return Population{

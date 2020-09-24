@@ -9,3 +9,5 @@ Cooperative Synapse Neuro Evolution in Rust
 - different public api
 - pub use in lib.rs
 - Add more activation functions
+- changing mutation probabilities and mutation strengths based on current generation
+- multipoint crossover vs singlepoint crossover

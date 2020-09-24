@@ -16,22 +16,21 @@ pub struct Genome {
     pub fit_max: f64,  // max of fit_enc
 }
 
-// rand_genome returns a randomly initialized genome
-pub fn rand_genome(network: ANN) -> Genome {
-    let genes = network.genes();
-    let len_genes = genes.len();
-    return Genome{
-        genes,
-        network,
-        fitness: 0.0,
-        fit_enc: vec![0.0; len_genes],
-        fit_total: 0.0,
-        fit_min: 0.0,
-        fit_max: 0.0,
-    }
-}
-
 impl Genome {
+    pub fn new(network: ANN) -> Self {
+        let genes = network.genes();
+        let len_genes = genes.len();
+        Genome{
+            genes,
+            network,
+            fitness: 0.0,
+            fit_enc: vec![0.0; len_genes],
+            fit_total: 0.0,
+            fit_min: 0.0,
+            fit_max: 0.0,
+        }
+    }
+
     pub fn update_fitness(&mut self, fit: f64) {
         let enc_fit = self.network.enc_fitness(fit);
         for i in 0..self.fit_enc.len() {

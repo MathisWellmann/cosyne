@@ -58,7 +58,7 @@ impl ANN {
 
     /// Return the number of genes in the network
     pub fn num_genes(&self) -> usize {
-        self.layers.iter().map(|l| l.num_genes()).count()
+        self.layers.iter().map(|l| l.num_genes()).sum()
     }
 
     // randomize returns a new randomized instance of ANN
@@ -76,7 +76,7 @@ impl ANN {
 
     // update the network weights and biases with new genes
     pub fn set_genes(&mut self, genes: &Vec<f64>) {
-        // assert_eq!(genes.len(), self.num_genes());
+        assert_eq!(genes.len(), self.num_genes());
 
         let mut start: usize = 0;
         for l in &mut self.layers {
@@ -92,6 +92,22 @@ impl ANN {
 mod tests {
     use super::*;
     use rulinalg::matrix::Matrix;
+
+    #[test]
+    fn network_new() {
+        let num_inputs: usize = 3;
+        let num_outputs: usize = 1;
+        let nn = ANN::new(num_inputs, num_outputs, Activation::Tanh);
+        assert_eq!(nn.layers.len(), 1);
+        assert_eq!(nn.num_inputs, num_inputs);
+        assert_eq!(nn.num_outputs, num_outputs);
+    }
+
+    #[test]
+    fn num_genes() {
+        let nn = ANN::new(3, 1, Activation::Relu);
+        assert_eq!(nn.num_genes(), 4);
+    }
 
     #[test]
     fn network_forward() {
@@ -151,6 +167,9 @@ mod tests {
     #[test]
     fn network_set_genes() {
         let mut nn = ANN::new(3, 1, Activation::Relu);
+        let genes = vec![1.0; 4];
+        nn.set_genes(&genes);
+
         nn.add_layer(3, Activation::Relu);
 
         let genes = vec![1.0; 16];

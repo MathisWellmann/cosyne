@@ -4,7 +4,6 @@ use cosyne::network::ANN;
 use cosyne::activations::Activation;
 
 fn main() {
-
     let pop_size = 20;
     let input_len = 2;
     let output_len = 2;
@@ -24,7 +23,7 @@ struct XorEnvironment {}
 
 impl Environment for XorEnvironment {
 
-    fn evaluate(&mut self, nn: &mut ANN) -> f64 {
+    fn evaluate(&self, nn: &mut ANN) -> f64 {
         let mut distance: f64;
 
         let mut output = nn.forward(vec![0.0, 0.0]);
