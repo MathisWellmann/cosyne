@@ -1,7 +1,6 @@
 extern crate rand;
 
 use self::rand::{thread_rng, Rng};
-use crate::population::sort_vec;
 use crate::network::ANN;
 
 
@@ -52,9 +51,13 @@ impl Genome {
     }
 
     pub fn replace_and_permute(&mut self, o: &Vec<f64>) {
-        let fs = self.fit_enc.clone();
-        let sorted = sort_vec(fs);
-        let threshold: f64 = sorted[(sorted.len() as f64 * 0.75).round() as usize];  // TODO: set threshold with config
+        let mut fs = self.fit_enc.clone();
+        // lower values will have lower indices
+        fs.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+        // TODO: set threshold with config
+
+        let threshold: f64 = fs[(fs.len() as f64 * 0.75).round() as usize];
 
         // assign permutation probability to each bit
         let mut marked_indices: Vec<usize> = Vec::new();

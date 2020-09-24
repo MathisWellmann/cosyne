@@ -7,3 +7,4 @@ Cooperative Synapse Neuro Evolution in Rust
 - Add more activation functions
 - changing mutation probabilities and mutation strengths based on current generation
 - multipoint crossover vs singlepoint crossover
+- Set fitness threshold with config

@@ -54,7 +54,7 @@ impl Cosyne {
         let mut pop = Population::new(self.config.pop_size, &self.start_nn);
         let mut champion: Genome = pop.genomes[0].clone();
         for g in 0..generations {
-            let best = pop.generation(&self.env);
+            let best = pop.generation(&self.env, g, generations);
             if best.fitness > champion.fitness {
                 champion = best;
             }
