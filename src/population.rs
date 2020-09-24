@@ -1,13 +1,15 @@
 extern crate rand;
 extern crate rand_distr;
 
-use self::rand::Rng;
+use self::rand::{Rng, thread_rng};
 use self::rand_distr::{Normal, Uniform};
 use crate::genome::{Genome};
 use crate::environment::Environment;
 use crate::network::ANN;
+use crate::Config;
 
 pub struct Population {
+    config: Config,
     pub(crate) genomes: Vec<Genome>,
     mutation_prob: f64,
     perturb_prob: f64,
@@ -16,16 +18,17 @@ pub struct Population {
 }
 
 impl Population {
-    pub fn new(pop_size: usize, nn: &ANN) -> Population {
+    pub fn new(config: Config, nn: &ANN) -> Population {
         let mut population = Vec::new();
 
-        for _i in 0..pop_size {
+        for _i in 0..config.pop_size {
             population.push(Genome::new(nn.randomize()));
         }
 
         return Population{
+            config,
             genomes: population,
-            mutation_prob: 1.0,  // changes over time
+            mutation_prob: 0.3,  // changes over time
             mutation_strength: 1.0,
             perturb_prob: 0.0,
             offspring: Vec::new(),
@@ -54,12 +57,10 @@ impl Population {
 
     // offspring creates new individuals from top 25% of population
     fn spawn_offspring(&mut self) {
-        // TODO: sort genomes by fitness
-
         let mut fs: Vec<f64> = self.genomes.iter().map(|g| g.fitness).collect();
         // lower values have lower indices
         fs.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let fit_threshold = fs[(fs.len() as f64 * 0.75).round() as usize];
+        let fit_threshold = fs[(fs.len() as f64 * self.config.elite_threshold).round() as usize];
 
         let mut best_indices: Vec<usize> = Vec::new();
         for (i, g) in self.genomes.iter().enumerate() {
@@ -78,37 +79,33 @@ impl Population {
             // take two random indices in top 25% of population
             let parent1 = best_indices[rng.sample(d)];
             let parent2 = best_indices[rng.sample(d)];
-            let (child1, child2) = self.crossover(parent1, parent2);
+            let mut baby = self.crossover(parent1, parent2);
 
-            let m_child1 = self.mutate(child1);
-            let m_child2 = self.mutate(child2);
+            self.mutate(&mut baby);
 
-            self.offspring.push(m_child1);
-            self.offspring.push(m_child2);
+            self.offspring.push(baby);
         }
     }
 
-    // TODO: multipoint crossover as well
-    // creates two children using the indices of two parents using single point crossover
-    fn crossover(&mut self, p1_index: usize, p2_index: usize) -> (Vec<f64>, Vec<f64>) {
-        let mut child1: Vec<f64> = Vec::new();
-        let mut child2: Vec<f64> = Vec::new();
+    // creates a baby from the genes of two genomes by randomly choosing either from one or the other parent
+    fn crossover(&mut self, p1_index: usize, p2_index: usize) -> Vec<f64> {
+        let mut rng = thread_rng();
+        let baby: Vec<f64> = self.genomes[p1_index].genes.iter()
+            .zip(&self.genomes[p2_index].genes)
+            .map(|(g1, g2)| {
+                if rng.gen::<bool>() {
+                    *g1
+                } else {
+                    *g2
+                }
+            })
+            .collect();
 
-        let crossover_point = self.genomes[p1_index].genes.len() / 2;
-        for i in 0..self.genomes[p1_index].genes.len() {
-            if i < crossover_point {
-                child1.push(self.genomes[p1_index].genes[i]);
-                child2.push(self.genomes[p2_index].genes[i]);
-                continue
-            }
-            child1.push(self.genomes[p2_index].genes[i]);
-            child2.push(self.genomes[p1_index].genes[i]);
-        }
-        return (child1, child2)
+        baby
     }
 
     // assign a random value to genes with probability (inplace)
-    fn mutate(&self, mut genes: Vec<f64>) -> Vec<f64> {
+    fn mutate(&self, genes: &mut Vec<f64>) {
         let d = Normal::new(0.0, 0.4).unwrap();
         let mut rng = rand::thread_rng();
         genes.iter_mut().for_each(|g| {
@@ -120,12 +117,11 @@ impl Population {
                 }
             }
         });
-        return genes
     }
 
     /// adjust the various probabilities based on current generation and max generation
     fn adjust_probs(&mut self, gen: usize, max_gen: usize) {
-        let x: f64 = (gen as f64 / max_gen as f64);
+        let x: f64 = gen as f64 / max_gen as f64;
         self.mutation_prob = 0.3 - 0.2 * x;
         self.perturb_prob = x;
         self.mutation_strength = 1.0 - 0.9 * x;

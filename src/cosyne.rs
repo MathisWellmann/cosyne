@@ -6,10 +6,12 @@ pub struct Cosyne{
     config: Config,
 }
 
+#[derive(Debug, Clone)]
 pub struct Config {
-    pop_size: usize,
+    pub(crate) pop_size: usize,
     activation: Option<Activation>,
     activations: Vec<Activation>,
+    pub(crate) elite_threshold: f64,
 }
 
 impl Config {
@@ -19,6 +21,7 @@ impl Config {
             pop_size,
             activation: Some(activation),
             activations: vec![],
+            elite_threshold: 0.5,
         }
     }
 
@@ -30,12 +33,15 @@ impl Config {
             pop_size,
             activation: None,
             activations,
+            elite_threshold: 0.5,
         }
     }
 
-    /// sets the population size
-    pub fn set_pop_size(&mut self, pop_size: usize) {
-        self.pop_size = pop_size
+    /// sets the elite_threshold
+    pub fn set_elite_threshold(&mut self, t: f64) {
+        assert!(t >= 0.0);
+        assert!(t < 1.0);
+        self.elite_threshold = t;
     }
 }
 
@@ -51,7 +57,7 @@ impl Cosyne {
     /// optimize the neural network for n generations.
     /// Returns the champion Genome
     pub fn optimize(&self, generations: usize) -> Genome {
-        let mut pop = Population::new(self.config.pop_size, &self.start_nn);
+        let mut pop = Population::new(self.config.clone(), &self.start_nn);
         let mut champion: Genome = pop.genomes[0].clone();
         for g in 0..generations {
             let best = pop.generation(&self.env, g, generations);

@@ -286,14 +286,16 @@ fn cart_pole_feed_forward() {
     let config = Config::new_fixed_activation(1000, activation);
     let env = Box::new(CartPoleEnvironment{});
     let mut nn = ANN::new(4, 1, activation);
-    nn.add_layer(4, activation);
+    nn.add_layer(8, activation);
+    nn.add_layer(6, activation);
     let mut cosyne = Cosyne::new(env, nn, config);
     let champion = cosyne.optimize(100);
     println!("champion: {:?}", champion);
 
     let genes = champion.genes;
     let mut net = ANN::new(4, 1, activation);
-    net.add_layer(4, activation);
+    net.add_layer(8, activation);
+    net.add_layer(6, activation);
     net.set_genes(&genes);
     render_champion(net);
 }
