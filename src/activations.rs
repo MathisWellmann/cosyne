@@ -1,4 +1,4 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Activation{
     Relu,
     SoftSign,

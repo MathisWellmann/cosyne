@@ -60,6 +60,11 @@ impl Layer {
         out
     }
 
+    /// Return the number of genes in this layer
+    pub fn num_genes(&self) -> usize {
+        self.weights.data().len() + self.biases.data().len()
+    }
+
     // enc_fit encodes the fitness to their respective weights and biases
     pub fn enc_fit(&mut self, _fit: f64) -> Vec<f64> {
         // TODO: layer: enc_fit

@@ -56,6 +56,11 @@ impl ANN {
         out
     }
 
+    /// Return the number of genes in the network
+    pub fn num_genes(&self) -> usize {
+        self.layers.iter().map(|l| l.num_genes()).count()
+    }
+
     // randomize returns a new randomized instance of ANN
     pub fn randomize(&self) -> ANN {
         let mut layers: Vec<Layer> = Vec::new();
@@ -71,6 +76,8 @@ impl ANN {
 
     // update the network weights and biases with new genes
     pub fn set_genes(&mut self, genes: &Vec<f64>) {
+        // assert_eq!(genes.len(), self.num_genes());
+
         let mut start: usize = 0;
         for l in &mut self.layers {
             let end = start + l.gene_len();

@@ -1,6 +1,8 @@
 pub mod population;
 pub mod environment;
 pub mod network;
-mod genome;
+pub mod genome;
 mod layer;
 pub mod activations;
+
+// TODO: pub use
