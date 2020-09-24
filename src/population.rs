@@ -10,6 +10,8 @@ use crate::network::ANN;
 pub struct Population {
     pub(crate) genomes: Vec<Genome>,
     mutation_prob: f64,
+    perturb_prob: f64,
+    mutation_strength: f64,
     offspring: Vec<Vec<f64>>,
 }
 
@@ -24,13 +26,15 @@ impl Population {
         return Population{
             genomes: population,
             mutation_prob: 1.0,  // changes over time
+            mutation_strength: 1.0,
+            perturb_prob: 0.0,
             offspring: Vec::new(),
         }
     }
 
     // propagate the new input data through the population and evolve
     pub fn generation(&mut self, env: &Box<dyn Environment>, gen: usize, max_gen: usize) -> Genome {
-        self.adjust_mutation_prob(gen, max_gen);
+        self.adjust_probs(gen, max_gen);
         self.spawn_offspring();
 
         let mut best_genome = self.genomes[0].clone();
@@ -109,17 +113,22 @@ impl Population {
         let mut rng = rand::thread_rng();
         genes.iter_mut().for_each(|g| {
             if rng.gen::<f64>() < self.mutation_prob {
-                // TODO: perturb
-                // TODO: uniform distribution to reassign new value
-                *g = rng.sample(d);
+                if rng.gen::<f64>() < self.perturb_prob {
+                    *g += rng.sample(d) * self.mutation_strength;
+                } else {
+                    *g = rng.gen::<f64>() * self.mutation_strength;
+                }
             }
         });
         return genes
     }
 
-    /// adjust the mutation probability based on current generation and max generation
-    fn adjust_mutation_prob(&mut self, gen: usize, max_gen: usize) {
-        self.mutation_prob = 1.0 - 0.9 * (gen as f64 / max_gen as f64);
+    /// adjust the various probabilities based on current generation and max generation
+    fn adjust_probs(&mut self, gen: usize, max_gen: usize) {
+        let x: f64 = (gen as f64 / max_gen as f64);
+        self.mutation_prob = 0.3 - 0.2 * x;
+        self.perturb_prob = x;
+        self.mutation_strength = 1.0 - 0.9 * x;
     }
 }
 
