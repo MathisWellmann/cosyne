@@ -1,4 +1,6 @@
-use crate::{Genome, Activation, Environment, ANN, Population};
+use cge::Activation;
+
+use crate::{Genome, Environment, ANN, Population};
 
 pub struct Cosyne{
     env: Box<dyn Environment>,

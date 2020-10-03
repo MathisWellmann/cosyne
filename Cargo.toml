@@ -13,6 +13,8 @@ rulinalg = "0.3.4"
 log = "0.4.0"
 pretty_env_logger = "0.4"
 
+cge = { git = "https://github.com/MathisWellmann/cge" }
+
 sdl2 = { version = "0.32.2", features = ["gfx", "ttf"], optional = true}
 random_color = { version = "0.4.4", optional = true }
 

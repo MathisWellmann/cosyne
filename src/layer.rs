@@ -1,7 +1,8 @@
 use rulinalg::matrix::{BaseMatrix, BaseMatrixMut, Matrix};
 use rand::{thread_rng, Rng};
-use crate::activations::{Activation, relu, soft_plus, soft_sign, tanh, relu_deriv, soft_plus_deriv, tanh_deriv, soft_sign_deriv};
 use rand_distr::{Distribution, Normal};
+
+use cge::Activation;
 
 #[derive(Debug, Clone)]
 pub struct Layer {
@@ -13,7 +14,6 @@ pub struct Layer {
     biases: Matrix<f64>,
     act: Matrix<f64>,  // activations
     act_func: fn(f64) -> f64,
-    act_deriv_func: fn(f64) -> f64,
     net: Matrix<f64>,
     net_deriv: Matrix<f64>,
 }
@@ -23,18 +23,7 @@ impl Layer {
     pub fn new(input_len: usize, output_len: usize, activation: Activation) -> Layer {
         let weights = Matrix::new(output_len, input_len, rand_vec_normal(input_len * output_len));
         let biases = Matrix::new(output_len, 1, rand_vec_normal(output_len));
-        let act_func = match activation{
-            Activation::Relu => relu,
-            Activation::SoftPlus => soft_plus,
-            Activation::SoftSign => soft_sign,
-            Activation::Tanh => tanh,
-        };
-        let act_deriv_func = match activation {
-            Activation::Relu => relu_deriv,
-            Activation::SoftPlus => soft_plus_deriv,
-            Activation::SoftSign => soft_sign_deriv,
-            Activation::Tanh => tanh_deriv,
-        };
+        let act_func = activation.get_func();
         let mut l = Layer{
             input_len,
             output_len,
@@ -44,7 +33,6 @@ impl Layer {
             biases,
             act: Matrix::new(input_len, 1, vec![0.0; input_len]),
             act_func,
-            act_deriv_func,
             net: Matrix::new(output_len, 1, vec![0.0; output_len]),
             net_deriv: Matrix::new(output_len, 1, vec![0.0; output_len]),
         };
@@ -86,8 +74,6 @@ impl Layer {
 
     pub fn forward(&mut self, m: &Matrix<f64>) -> Matrix<f64> {
         let net = &self.weights * m + &self.biases;
-        // self.net = net.clone();
-        // self.net_deriv = net.clone().apply(&self.act_deriv_func);
         return net.apply(&self.act_func);
     }
 

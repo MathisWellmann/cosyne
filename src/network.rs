@@ -1,6 +1,8 @@
-use crate::layer::Layer;
-use crate::activations::Activation;
 use rulinalg::matrix::Matrix;
+
+use cge::Activation;
+
+use crate::layer::Layer;
 
 #[derive(Debug, Clone)]
 pub struct ANN {

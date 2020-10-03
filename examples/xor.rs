@@ -1,4 +1,6 @@
-use cosyne::{Activation, Config, ANN, Cosyne, Environment};
+use cge::Activation;
+
+use cosyne::{ Config, ANN, Cosyne, Environment};
 
 fn main() {
     let config = Config::new_fixed_activation(100, Activation::Relu);
