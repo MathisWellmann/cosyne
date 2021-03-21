@@ -1,34 +1,42 @@
-use rulinalg::matrix::{BaseMatrix, BaseMatrixMut, Matrix};
 use rand::{thread_rng, Rng};
 use rand_distr::{Distribution, Normal};
+use rulinalg::matrix::{BaseMatrix, BaseMatrixMut, Matrix};
 
-use cge::Activation;
+use crate::Activation;
 
 #[derive(Debug, Clone)]
 pub struct Layer {
-    input_len: usize,
-    output_len: usize,
-    gene_len: usize,
-    activation: Activation,
+    pub(crate) input_len: usize,
+    pub(crate) output_len: usize,
+    pub(crate) gene_len: usize,
+    pub(crate) activation: Activation,
     weights: Matrix<f64>,
     biases: Matrix<f64>,
-    act: Matrix<f64>,  // activations
+    act: Matrix<f64>, // activations
     act_func: fn(f64) -> f64,
     net: Matrix<f64>,
     net_deriv: Matrix<f64>,
 }
 
 impl Layer {
-    // new returns a new Layer with given input and output length
+    /// Create a new Layer with given input and output length and random weight and biases
     pub fn new(input_len: usize, output_len: usize, activation: Activation) -> Layer {
-        let weights = Matrix::new(output_len, input_len, rand_vec_normal(input_len * output_len));
-        let biases = Matrix::new(output_len, 1, rand_vec_normal(output_len));
+        let weights = Matrix::new(
+            output_len,
+            input_len,
+            rand_vec_uniform(input_len * output_len),
+        );
+        let biases = Matrix::new(
+            output_len,
+            1,
+            rand_vec_uniform(output_len)
+        );
         let act_func = activation.get_func();
-        let mut l = Layer{
+        let mut l = Layer {
             input_len,
             output_len,
             activation,
-            gene_len: 0,
+            gene_len: output_len * input_len + output_len,
             weights,
             biases,
             act: Matrix::new(input_len, 1, vec![0.0; input_len]),
@@ -36,11 +44,10 @@ impl Layer {
             net: Matrix::new(output_len, 1, vec![0.0; output_len]),
             net_deriv: Matrix::new(output_len, 1, vec![0.0; output_len]),
         };
-        l.gene_len = l.genes().len();
-        return l
+        return l;
     }
 
-    // genes maps the weight and biases in Matrices to flat vector
+    /// map the weight and biases in Matrices to flat vector
     pub fn genes(&self) -> Vec<f64> {
         let mut out: Vec<f64> = Vec::new();
         out.append(&mut self.weights.clone().into_vec());
@@ -93,55 +100,34 @@ impl Layer {
     // panics if genes.len() is wrong
     pub fn set_genes(&mut self, genes: &Vec<f64>) {
         let w_end = self.output_len * self.input_len;
-        let weights: Matrix<f64> = Matrix::new(self.output_len, self.input_len, genes[..w_end].to_vec());
+        let weights: Matrix<f64> =
+            Matrix::new(self.output_len, self.input_len, genes[..w_end].to_vec());
         self.set_weights(weights);
         let biases: Matrix<f64> = Matrix::new(self.output_len, 1, genes[w_end..].to_vec());
         self.set_biases(biases);
     }
-
-    pub fn input_len(&self) -> usize {
-        return self.input_len
-    }
-
-    pub fn output_len(&self) -> usize {
-        return self.output_len
-    }
-
-    pub fn activation(&self) -> Activation {
-        return self.activation.clone()
-    }
-
-    pub fn gene_len(&self) -> usize {
-        return self.gene_len
-    }
 }
 
-// generate a random vector of given length
-fn rand_vec(length: usize) -> Vec<f64> {
-    let mut out: Vec<f64> = vec![0.0; length];
+/// Generate a r/andom vector of given length using a uniform distribution
+/// values in range [-1.0, 1.0]
+fn rand_vec_uniform(length: usize) -> Vec<f64> {
     let mut rng = thread_rng();
-    for i in 0..length {
-        out[i] = rng.gen::<f64>();
-    }
-    out
-}
-
-fn rand_vec_normal(length: usize) -> Vec<f64> {
-    let d = Normal::new(0.0, 0.4).unwrap();
-    let mut rng = rand::thread_rng();
-    let mut out: Vec<f64> = vec![0.0; length];
-    for i in 0..length {
-        out[i] = d.sample(&mut rng);
-    }
-    out
+    (0..length)
+        .map(|_| rng.gen::<f64>() * 2.0 - 1.0)
+        .collect()
+    // let mut out: Vec<f64> = vec![0.0; length];
+    // for i in 0..length {
+    //     out[i] = ;
+    // }
+    // out
 }
 
 #[cfg(test)]
 mod tests {
     extern crate round;
 
-    use round::*;
     use super::*;
+    use round::*;
 
     #[test]
     fn layer_forward1() {
@@ -155,7 +141,7 @@ mod tests {
 
         assert_eq!(output.cols(), 1);
         assert_eq!(output.rows(), 1);
-        assert_eq!(round(output.get_row(0).unwrap()[0], 2), 0.84);
+        assert_eq!(round(output.row(0)[0], 2), 0.84);
     }
 
     #[test]
@@ -169,7 +155,7 @@ mod tests {
         let input = Matrix::new(3, 1, vec![1.0; 3]);
         let output = l.forward(&input);
 
-        println!("output: {:?}", output.get_row(0).unwrap());
+        println!("output: {:?}", output.row(0));
         assert_eq!(output, Matrix::new(3, 1, vec![3.0, 3.0, 3.0]));
     }
 
@@ -228,26 +214,14 @@ mod tests {
     }
 
     #[test]
-    fn rand_vec_normal1() {
-        let mut some_neg: bool = false;
-        let vals: Vec<f64> = rand_vec_normal(1024);
-        for v in &vals {
-            if *v < 0.0 {
-                some_neg = true;
-            }
-        }
-        assert!(some_neg);
-    }
-
-    #[test]
     fn layer_gene_len() {
         let l = Layer::new(3, 1, Activation::Relu);
 
-        assert_eq!(l.gene_len(), 4);
+        assert_eq!(l.gene_len, 4);
 
         let l = Layer::new(3, 3, Activation::Relu);
 
-        assert_eq!(l.gene_len(), 12);
+        assert_eq!(l.gene_len, 12);
     }
 
     #[test]
@@ -262,5 +236,4 @@ mod tests {
         l.set_genes(&genes);
         assert_eq!(l.genes(), genes);
     }
-
 }

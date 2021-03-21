@@ -1,74 +1,64 @@
-use cge::Activation;
+use crate::{Environment, Genome, Population, ANN, Config};
 
-use crate::{Genome, Environment, ANN, Population};
+#[cfg(feature = "plot")]
+use {
+    crate::plot_multiple_series,
+    failure::Error,
+};
 
-pub struct Cosyne{
+pub struct Cosyne {
     env: Box<dyn Environment>,
-    start_nn: ANN,
-    config: Config,
+    species: Vec<Population>,
+    champion: Genome,
+    generation: usize,
+    champion_fit_history: Vec<Vec<f64>>,
 }
 
-#[derive(Debug, Clone)]
-pub struct Config {
-    pub(crate) pop_size: usize,
-    activation: Option<Activation>,
-    activations: Vec<Activation>,
-    pub(crate) elite_threshold: f64,
-}
-
-impl Config {
-    /// Creates a new Config with a fixed activation
-    pub fn new_fixed_activation(pop_size: usize, activation: Activation) -> Self {
-        Self {
-            pop_size,
-            activation: Some(activation),
-            activations: vec![],
-            elite_threshold: 0.5,
-        }
-    }
-
-    /// creates a new Config with a vector of activations which will be used in the evolution process
-    pub fn new_with_activations(pop_size: usize, activations: Vec<Activation>) -> Self {
-        // TODO: remove once feature ready
-        unimplemented!("random activations have not been integrated yet!");
-        Self {
-            pop_size,
-            activation: None,
-            activations,
-            elite_threshold: 0.5,
-        }
-    }
-
-    /// sets the elite_threshold
-    pub fn set_elite_threshold(&mut self, t: f64) {
-        assert!(t >= 0.0);
-        assert!(t < 1.0);
-        self.elite_threshold = t;
-    }
-}
 
 impl Cosyne {
+    /// Create a new CoSyNE optimizer with a given environment, neural network and config
     pub fn new(env: Box<dyn Environment>, nn: ANN, config: Config) -> Self {
+        let mut species: Vec<Population> = Vec::with_capacity(config.num_species);
+        for _ in 0..config.num_species {
+            species.push(Population::new(config.clone(), &nn));
+        }
+        let champion = Genome::new(nn.randomize());
         Self {
             env,
-            start_nn: nn,
-            config,
+            species,
+            champion,
+            generation: 0,
+            champion_fit_history: vec![vec![]; config.num_species],
         }
     }
 
-    /// optimize the neural network for n generations.
-    /// Returns the champion Genome
-    pub fn optimize(&self, generations: usize) -> Genome {
-        let mut pop = Population::new(self.config.clone(), &self.start_nn);
-        let mut champion: Genome = pop.genomes[0].clone();
-        for g in 0..generations {
-            let best = pop.generation(&self.env, g, generations);
-            if best.fitness > champion.fitness {
-                champion = best;
+    /// Perform an evolutionary step
+    pub fn step(&mut self) {
+        for (i, p) in self.species.iter_mut().enumerate() {
+            let best = p.generation(&self.env);
+            if best.fitness > self.champion.fitness {
+                self.champion = best;
             }
-            debug!("gen {}, champion fitness: {:.4}", g, champion.fitness);
-        }
+            self.champion_fit_history[i].push(self.champion.fitness);
 
-        champion
+            info!(
+                "species: {}, gen {}, champion fitness: {:.4}",
+                i, self.generation, self.champion.fitness
+            );
+        }
+        self.generation += 1;
+    }
+
+    /// Get the current champion
+    pub fn champion(&self) -> &Genome {
+        &self.champion
+    }
+
+    #[cfg(feature = "plot")]
+    /// Plots the historical fitness values of the population
+    pub fn plot_fitness_history(&self, filename: &str, resolution: (u32, u32)) -> Result<(), Error> {
+        // TODO: plot worst and average fitness as well
+
+        plot_multiple_series(&self.champion_fit_history, filename, resolution)
     }
 }

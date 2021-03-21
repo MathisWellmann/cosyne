@@ -1,15 +1,19 @@
-use cge::Activation;
+use cosyne::{Activation, Config, Cosyne, Environment, ANN};
 
-use cosyne::{ Config, ANN, Cosyne, Environment};
-
-fn main() {
-    let config = Config::new_fixed_activation(100, Activation::Relu);
-    let env = Box::new(XorEnvironment{});
+#[test]
+fn xor() {
+    let config = Config::new(100, 5);
+    let env = Box::new(XorEnvironment {});
     let activation = Activation::Relu;
     let mut nn = ANN::new(2, 1, activation);
+    nn.add_layer(2, Activation::Relu);
     let mut cosyne = Cosyne::new(env, nn, config);
-    let champion = cosyne.optimize(100);
+    for _ in 0..100 {
+        cosyne.step();
+    }
+    let champion = cosyne.champion();
     println!("champion: {:?}", champion);
+    assert!(champion.fitness > 3.9);
 }
 
 struct XorEnvironment {}

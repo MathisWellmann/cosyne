@@ -3,30 +3,29 @@ extern crate rand;
 use self::rand::{thread_rng, Rng};
 use crate::network::ANN;
 
-
 #[derive(Debug, Clone)]
 pub struct Genome {
     pub genes: Vec<f64>,
     pub network: ANN,
-    pub fitness: f64,  // this is the fitness of entire genome
-    pub fit_enc: Vec<f64>,  // encoded fitness for each weight and bias of network
-    pub fit_total: f64,  // sum of fit_enc
-    pub fit_min: f64,  // min of fit_enc
-    pub fit_max: f64,  // max of fit_enc
+    pub fitness: f64,      // this is the fitness of entire genome
+    pub fit_enc: Vec<f64>, // encoded fitness for each weight and bias of network
+    pub fit_total: f64,    // sum of fit_enc
+    pub fit_min: f64,      // min of fit_enc
+    pub fit_max: f64,      // max of fit_enc
 }
 
 impl Genome {
     pub fn new(network: ANN) -> Self {
         let genes = network.genes();
         let len_genes = genes.len();
-        Genome{
+        Genome {
             genes,
             network,
-            fitness: 0.0,
-            fit_enc: vec![0.0; len_genes],
-            fit_total: 0.0,
-            fit_min: 0.0,
-            fit_max: 0.0,
+            fitness: std::f64::MIN,
+            fit_enc: vec![std::f64::MIN; len_genes],
+            fit_total: std::f64::MIN,
+            fit_min: std::f64::MIN,
+            fit_max: std::f64::MIN,
         }
     }
 
@@ -67,9 +66,11 @@ impl Genome {
             if self.fit_enc[i] < threshold {
                 // replace with offspring
                 self.genes[i] = o[i];
-                continue
+                continue;
             }
-            let p = 1.0 - ((self.fit_enc[i] - self.fit_min) / self.fit_max - self.fit_min).powf(1.0 / self.genes.len() as f64);
+            let p = 1.0
+                - ((self.fit_enc[i] - self.fit_min) / self.fit_max - self.fit_min)
+                    .powf(1.0 / self.genes.len() as f64);
             if rng.gen::<f64>() < p {
                 marked_indices.push(i);
             }
@@ -84,7 +85,7 @@ impl Genome {
                 init = false;
                 temp = self.genes[marked_indices[i] as usize];
                 init_index = marked_indices[i] as usize;
-                continue
+                continue;
             }
 
             // swap bits
@@ -106,5 +107,4 @@ impl Genome {
         self.fit_min = 0.0;
         self.fit_max = 0.0;
     }
-
 }

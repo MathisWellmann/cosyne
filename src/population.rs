@@ -1,61 +1,76 @@
 extern crate rand;
 extern crate rand_distr;
 
-use self::rand::{Rng, thread_rng};
+use self::rand::{thread_rng, Rng};
 use self::rand_distr::{Normal, Uniform};
-use crate::genome::{Genome};
 use crate::environment::Environment;
+use crate::genome::Genome;
 use crate::network::ANN;
 use crate::Config;
 
 pub struct Population {
     config: Config,
     pub(crate) genomes: Vec<Genome>,
-    mutation_prob: f64,
-    perturb_prob: f64,
-    mutation_strength: f64,
     offspring: Vec<Vec<f64>>,
 }
 
 impl Population {
-    pub fn new(config: Config, nn: &ANN) -> Population {
+    /// Set the mutation probability of the population
+    /// panics in debug mode if mp < 0.0 || mp > 1.0
+    pub fn set_mutation_prob(&mut self, mp: f64) {
+        debug_assert!(mp >= 0.0 && mp <= 1.0);
+        self.config.mutation_prob = mp;
+    }
+
+    /// Set the mutation strength of the population
+    /// panics in debug mode if mp < 0.0 || mp > 1.0
+    pub fn set_mutation_strength(&mut self, ms: f64) {
+        debug_assert!(ms >= 0.0 && ms <= 1.0);
+        self.config.mutation_strength = ms;
+    }
+
+    /// Set the perturb probability of the population
+    /// panics in debug mode if pp < 0.0 || pp > 1.0
+    pub fn set_perturb_prob(&mut self, pp: f64) {
+        debug_assert!(pp >= 0.0 && pp <= 1.0);
+        self.config.perturb_prob = pp;
+    }
+
+    /// Create a new population with a given config and network
+    pub(crate) fn new(config: Config, nn: &ANN) -> Population {
         let mut population = Vec::new();
 
         for _i in 0..config.pop_size {
             population.push(Genome::new(nn.randomize()));
         }
 
-        return Population{
+        return Population {
             config,
             genomes: population,
-            mutation_prob: 0.3,  // changes over time
-            mutation_strength: 1.0,
-            perturb_prob: 0.0,
             offspring: Vec::new(),
-        }
+        };
     }
 
-    // propagate the new input data through the population and evolve
-    pub fn generation(&mut self, env: &Box<dyn Environment>, gen: usize, max_gen: usize) -> Genome {
-        self.adjust_probs(gen, max_gen);
+    /// Perform a single generational evolutionary step in a given environment
+    pub(crate) fn generation(&mut self, env: &Box<dyn Environment>) -> Genome {
         self.spawn_offspring();
 
         let mut best_genome = self.genomes[0].clone();
-        for i in 0..self.genomes.len() {
-            let fit = env.evaluate(&mut self.genomes[i].network);
-            self.genomes[i].update_fitness(fit);
+        for (i, g) in self.genomes.iter_mut().enumerate() {
+            let fit = env.evaluate(&mut g.network);
+            g.update_fitness(fit);
 
             if fit > best_genome.fitness {
-                best_genome = self.genomes[i].clone()
+                best_genome = g.clone()
             }
 
-            self.genomes[i].replace_and_permute(&self.offspring[i]);
+            g.replace_and_permute(&self.offspring[i]);
         }
 
-        return best_genome
+        return best_genome;
     }
 
-    // offspring creates new individuals from top 25% of population
+    /// Create new individuals from top n% of population
     fn spawn_offspring(&mut self) {
         let mut fs: Vec<f64> = self.genomes.iter().map(|g| g.fitness).collect();
         // lower values have lower indices
@@ -87,77 +102,34 @@ impl Population {
         }
     }
 
-    // creates a baby from the genes of two genomes by randomly choosing either from one or the other parent
+    /// Perform crossover mutation operator,
+    /// creating a baby from the genes of two genomes
+    /// by randomly choosing either from one or the other parent
     fn crossover(&mut self, p1_index: usize, p2_index: usize) -> Vec<f64> {
         let mut rng = thread_rng();
-        let baby: Vec<f64> = self.genomes[p1_index].genes.iter()
+        let baby: Vec<f64> = self.genomes[p1_index]
+            .genes
+            .iter()
             .zip(&self.genomes[p2_index].genes)
-            .map(|(g1, g2)| {
-                if rng.gen::<bool>() {
-                    *g1
-                } else {
-                    *g2
-                }
-            })
+            .map(|(g1, g2)| if rng.gen::<bool>() { *g1 } else { *g2 })
             .collect();
 
         baby
     }
 
-    // assign a random value to genes with probability (inplace)
+    /// Perform a mutation operator,
+    /// by either perturbing or completely replacing values
     fn mutate(&self, genes: &mut Vec<f64>) {
         let d = Normal::new(0.0, 0.4).unwrap();
         let mut rng = rand::thread_rng();
         genes.iter_mut().for_each(|g| {
-            if rng.gen::<f64>() < self.mutation_prob {
-                if rng.gen::<f64>() < self.perturb_prob {
-                    *g += rng.sample(d) * self.mutation_strength;
+            if rng.gen::<f64>() < self.config.mutation_prob {
+                if rng.gen::<f64>() < self.config.perturb_prob {
+                    *g += rng.sample(d) * self.config.mutation_strength;
                 } else {
-                    *g = rng.gen::<f64>() * self.mutation_strength;
+                    *g = rng.gen::<f64>() * self.config.mutation_strength;
                 }
             }
         });
     }
-
-    /// adjust the various probabilities based on current generation and max generation
-    fn adjust_probs(&mut self, gen: usize, max_gen: usize) {
-        let x: f64 = gen as f64 / max_gen as f64;
-        self.mutation_prob = 0.3 - 0.2 * x;
-        self.perturb_prob = x;
-        self.mutation_strength = 1.0 - 0.9 * x;
-    }
-}
-
-pub fn sort(vals: Vec<(f64, usize)>) -> Vec<(f64, usize)> {
-    if vals.len() <= 1 {
-        return vals
-    }
-
-    let median = vals[vals.len() / 2].0;
-
-    let mut low_part: Vec<(f64, usize)> = Vec::new();
-    let mut high_part: Vec<(f64, usize)> = Vec::new();
-    let mut middle_part: Vec<(f64, usize)> = Vec::new();
-
-    for i in vals {
-        if i.0 < median {
-            low_part.push(i);
-        } else if i.0 > median {
-            high_part.push(i);
-        } else {
-            middle_part.push(i);
-        }
-    }
-
-    low_part = sort(low_part);
-    high_part = sort(high_part);
-
-    for i in 0..middle_part.len() {
-        low_part.push(middle_part[i]);
-    }
-    for i in 0..high_part.len() {
-        low_part.push(high_part[i]);
-    }
-
-    return low_part
 }
