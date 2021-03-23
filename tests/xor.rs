@@ -2,18 +2,18 @@ use cosyne::{Activation, Config, Cosyne, Environment, ANN};
 
 #[test]
 fn xor() {
-    let config = Config::new(100, 5);
+    let config = Config::new(100);
     let env = Box::new(XorEnvironment {});
     let activation = Activation::Relu;
     let mut nn = ANN::new(2, 1, activation);
     nn.add_layer(2, Activation::Relu);
     let mut cosyne = Cosyne::new(env, nn, config);
     for _ in 0..100 {
-        cosyne.step();
+        cosyne.evolve();
     }
     let champion = cosyne.champion();
     println!("champion: {:?}", champion);
-    assert!(champion.fitness > 3.9);
+    assert!(champion.1 > 3.9);
 }
 
 struct XorEnvironment {}

@@ -10,9 +10,13 @@ pub enum Activation {
     Sign,
     /// A non-linear function. This function is the most general, so it should be defaulted to.
     Sigmoid,
+    /// Tanh activation function with output range [-1.0, 1.0]
     Tanh,
+    /// SoftSign activation function
     SoftSign,
+    /// BentIdentity activation function
     BentIdentity,
+    /// Rectified linear unit activation function
     Relu,
 }
 
@@ -86,9 +90,5 @@ pub fn bent_identity(x: f64) -> f64 {
 
 /// rectified linear unit
 pub fn relu(x: f64) -> f64 {
-    return if x > 0.0 {
-        x
-    } else {
-        0.0
-    }
+    return if x > 0.0 { x } else { 0.0 };
 }

@@ -1,5 +1,4 @@
 use rand::{thread_rng, Rng};
-use rand_distr::{Distribution, Normal};
 use rulinalg::matrix::{BaseMatrix, BaseMatrixMut, Matrix};
 
 use crate::Activation;
@@ -15,24 +14,19 @@ pub struct Layer {
     act: Matrix<f64>, // activations
     act_func: fn(f64) -> f64,
     net: Matrix<f64>,
-    net_deriv: Matrix<f64>,
 }
 
 impl Layer {
     /// Create a new Layer with given input and output length and random weight and biases
-    pub fn new(input_len: usize, output_len: usize, activation: Activation) -> Layer {
+    pub fn new(input_len: usize, output_len: usize, activation: Activation) -> Self {
         let weights = Matrix::new(
             output_len,
             input_len,
             rand_vec_uniform(input_len * output_len),
         );
-        let biases = Matrix::new(
-            output_len,
-            1,
-            rand_vec_uniform(output_len)
-        );
+        let biases = Matrix::new(output_len, 1, rand_vec_uniform(output_len));
         let act_func = activation.get_func();
-        let mut l = Layer {
+        Self {
             input_len,
             output_len,
             activation,
@@ -42,9 +36,7 @@ impl Layer {
             act: Matrix::new(input_len, 1, vec![0.0; input_len]),
             act_func,
             net: Matrix::new(output_len, 1, vec![0.0; output_len]),
-            net_deriv: Matrix::new(output_len, 1, vec![0.0; output_len]),
-        };
-        return l;
+        }
     }
 
     /// map the weight and biases in Matrices to flat vector
@@ -60,37 +52,21 @@ impl Layer {
         self.weights.data().len() + self.biases.data().len()
     }
 
-    // enc_fit encodes the fitness to their respective weights and biases
-    pub fn enc_fit(&mut self, _fit: f64) -> Vec<f64> {
-        // TODO: layer: enc_fit
-
-        // let fit_wrt_net = &self.net_deriv * fit;
-        //
-        // let bias_part = &self.biases.elediv(&self.net);
-        // let fit_wrt_bias = fit_wrt_net * bias_part;
-        //
-        // let fit_wrt_weights = fit_wrt_net * ();
-        // println!("fit_wrt_weights: {:?}", fit_wrt_weights);
-        //
-        // let mut out: Vec<f64> = Vec::new();
-        // out.append(&mut fit_wrt_bias.into_vec());
-        // out.append(&mut fit_wrt_weights.into_vec());
-
-        vec![1.0; self.biases.rows() + self.weights.cols() * self.weights.rows()]
-    }
-
-    pub fn forward(&mut self, m: &Matrix<f64>) -> Matrix<f64> {
+    /// Forward values through one layer
+    pub(crate) fn forward(&mut self, m: &Matrix<f64>) -> Matrix<f64> {
         let net = &self.weights * m + &self.biases;
-        return net.apply(&self.act_func);
+        net.apply(&self.act_func)
     }
 
-    pub fn set_weights(&mut self, w: Matrix<f64>) {
+    /// Set the weights for the layer
+    pub(crate) fn set_weights(&mut self, w: Matrix<f64>) {
         assert_eq!(self.weights.rows(), w.rows());
         assert_eq!(self.weights.cols(), w.cols());
         self.weights = w;
     }
 
-    pub fn set_biases(&mut self, b: Matrix<f64>) {
+    /// Set the biases for the layer
+    pub(crate) fn set_biases(&mut self, b: Matrix<f64>) {
         assert_eq!(self.biases.rows(), b.rows());
         assert_eq!(self.biases.cols(), b.cols());
         self.biases = b;
@@ -112,9 +88,7 @@ impl Layer {
 /// values in range [-1.0, 1.0]
 fn rand_vec_uniform(length: usize) -> Vec<f64> {
     let mut rng = thread_rng();
-    (0..length)
-        .map(|_| rng.gen::<f64>() * 2.0 - 1.0)
-        .collect()
+    (0..length).map(|_| rng.gen::<f64>() * 2.0 - 1.0).collect()
     // let mut out: Vec<f64> = vec![0.0; length];
     // for i in 0..length {
     //     out[i] = ;

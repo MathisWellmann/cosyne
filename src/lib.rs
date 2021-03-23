@@ -1,3 +1,8 @@
+#![deny(missing_docs, missing_crate_level_docs)]
+
+//! CoSyNE crate for optimizing fixed topology neural network using co-evolution
+//! as described in the original paper (see resources/CoSyNE.pdf)
+
 #[macro_use]
 extern crate log;
 extern crate pretty_env_logger;
@@ -5,23 +10,28 @@ extern crate pretty_env_logger;
 mod activation;
 mod config;
 mod cosyne;
-mod environment;
-mod genome;
 mod layer;
 mod network;
-mod population;
+mod permutation_prob_f;
 #[cfg(feature = "plot")]
 mod plot;
+mod population;
 
+pub use crate::cosyne::Cosyne;
 pub use activation::Activation;
 pub use config::Config;
-pub use crate::cosyne::Cosyne;
-pub use environment::Environment;
-pub use genome::Genome;
 pub use network::ANN;
+pub use permutation_prob_f::PermutationProbF;
 
-pub(crate) use population::Population;
 pub(crate) use layer::Layer;
+pub(crate) use population::Population;
 
 #[cfg(feature = "plot")]
-pub(crate) use plot::plot_multiple_series;
+pub(crate) use plot::plot_values;
+
+/// Environment to test the neural network in
+pub trait Environment {
+    /// Return the fitness of a given neural network in the environment.
+    /// Higher values indicate a more fit candidate
+    fn evaluate(&self, nn: &mut ANN) -> f64;
+}

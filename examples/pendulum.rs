@@ -1,18 +1,26 @@
-use cosyne::{Config, ANN, Activation, Cosyne, Genome, Environment};
+use cosyne::{Activation, Config, Cosyne, Environment, ANN, PermutationProbF};
+use gym_rs::{ActionType, GifRender, GymEnv, PendulumEnv};
 use std::time::Instant;
-use gym_rs::{PendulumEnv, GifRender, GymEnv, ActionType};
 
 fn main() {
     pretty_env_logger::init();
 
-    let config = Config::new(100, 1);
-    let env = Box::new(PendulumEvaluator{} );
-    let mut nn = ANN::new(3, 1, Activation::Tanh);
-    nn.add_layer(3, Activation::Tanh);
+    let config = Config{
+        pop_size: 250,
+        top_ratio_to_recombine: 0.25,
+        mutation_prob: 0.1,
+        mutation_strength: 1.0,
+        perturb_prob: 0.5,
+        permutation_prob_f: PermutationProbF::Relative,
+    };
+    let env = Box::new(PendulumEvaluator {});
+    let mut nn = ANN::new(3, 1, Activation::Relu);
+    nn.add_layer(3, Activation::Relu);
+    nn.add_layer(3, Activation::Relu);
     let mut cosyne = Cosyne::new(env, nn, config);
     let t0 = Instant::now();
-    for _ in 0..100 {
-        cosyne.step();
+    for _ in 0..250 {
+        cosyne.evolve();
     }
     let champion = cosyne.champion();
     println!("champion: {:?}", champion);
@@ -21,7 +29,7 @@ fn main() {
     let filename = "img/pendulum_fitness_history.png";
     cosyne.plot_fitness_history(filename, (1920, 1080)).unwrap();
 
-    render_champion(&mut champion.clone());
+    render_champion(&mut champion.0.clone());
 }
 
 struct PendulumEvaluator {}
@@ -29,6 +37,7 @@ struct PendulumEvaluator {}
 impl Environment for PendulumEvaluator {
     fn evaluate(&self, nn: &mut ANN) -> f64 {
         let mut env = PendulumEnv::default();
+        env.seed(0);
 
         let mut state: Vec<f64> = env.reset();
 
@@ -36,11 +45,11 @@ impl Environment for PendulumEvaluator {
         let mut total_reward: f64 = 0.0;
         let mut steps: usize = 0;
         while !end {
-            if steps > 150 {
+            if steps > 300 {
                 break;
             }
             let output = nn.forward(state);
-            let action = ActionType::Continuous(vec![output[0] * 2.5]);
+            let action = ActionType::Continuous(vec![output[0] * 2.0]);
             let (s, reward, done, _info) = env.step(action);
             end = done;
             state = s;
@@ -51,28 +60,24 @@ impl Environment for PendulumEvaluator {
     }
 }
 
-fn render_champion(champion: &mut Genome) {
+fn render_champion(champion: &mut ANN) {
     println!("rendering champion...");
 
     let mut env = PendulumEnv::default();
+    env.seed(0);
 
-    let mut render = GifRender::new(
-        540,
-        540,
-        "img/pendulum_champion.gif",
-        50,
-    ).unwrap();
+    let mut render = GifRender::new(540, 540, "img/pendulum_champion.gif", 50).unwrap();
 
     let mut state: Vec<f64> = env.reset();
 
     let mut end: bool = false;
     let mut steps: usize = 0;
     while !end {
-        if steps > 150 {
-            break
+        if steps > 300 {
+            break;
         }
-        let output = champion.network.forward(state);
-        let action = ActionType::Continuous(vec![output[0] * 2.5]);
+        let output = champion.forward(state);
+        let action = ActionType::Continuous(vec![output[0] * 3.0]);
         let (s, _reward, done, _info) = env.step(action);
         end = done;
         state = s;

@@ -1,32 +1,32 @@
-#[derive(Debug, Clone)]
+use crate::permutation_prob_f::PermutationProbF;
+
+#[derive(Debug, Clone, Copy)]
 /// Configuration of CoSyNE
 pub struct Config {
-    pub pop_size: usize,         // total population size
-    pub num_species: usize,      // number of sub-populations
-    pub elite_threshold: f64,    // Threshold defining
+    /// total number of sub-populations
+    pub pop_size: usize,
+    /// Threshold defining how much of the best performing
+    pub top_ratio_to_recombine: f64,
+    /// probability of mutation a weight of a sub-population
     pub mutation_prob: f64,
+    /// strength of the mutation
     pub mutation_strength: f64,
+    /// probability of applying a perturbation
     pub perturb_prob: f64,
+    /// Permutation function to use
+    pub permutation_prob_f: PermutationProbF,
 }
 
 impl Config {
     /// Create a new Config
-    pub fn new(pop_size: usize, num_species: usize) -> Self {
+    pub fn new(pop_size: usize) -> Self {
         Self {
             pop_size,
-            num_species,
-            elite_threshold: 0.25,
+            top_ratio_to_recombine: 0.25,
             mutation_prob: 0.3,
             mutation_strength: 0.5,
             perturb_prob: 0.5,
+            permutation_prob_f: PermutationProbF::Uniform(1.0),
         }
-    }
-
-    /// Set the elite_threshold
-    /// which defines what percentage of sorted population will be regarded for offspring creation
-    /// panics if probability is < 0.0 || t > 1.0
-    pub fn set_elite_threshold(&mut self, t: f64) {
-        assert!(t >= 0.0 && t <= 1.0);
-        self.elite_threshold = t;
     }
 }

@@ -2,39 +2,51 @@ use rulinalg::matrix::Matrix;
 
 use crate::{Activation, Layer};
 
-
 #[derive(Debug, Clone)]
+/// Artificial Neural Network
 pub struct ANN {
     num_inputs: usize,
     num_outputs: usize,
     pub(crate) layers: Vec<Layer>,
+    num_genes: usize,
 }
 
 impl ANN {
+    /// Create a new artificial neural network
+    /// with a given number of inputs and outputs and an activation function
     pub fn new(num_inputs: usize, num_outputs: usize, act_func: Activation) -> ANN {
         let mut layers: Vec<Layer> = Vec::new();
         layers.push(Layer::new(num_inputs, num_outputs, act_func.clone()));
+        let num_genes = layers.iter().map(|l| l.num_genes()).sum();
+
         return ANN {
             num_inputs,
             num_outputs,
             layers,
+            num_genes,
         };
     }
 
-    // add a new hidden layer. this modifies the last and second to last layer to match neuron count
+    /// Add a new hidden layer with a given neuron count and activation function.
+    /// This modifies the previous and following layer to match io in each layer
     pub fn add_layer(&mut self, neuron_count: usize, act: Activation) {
-        let last = self.layers.len() - 1;
+        let last_layer_idx = self.layers.len() - 1;
+
         // set new layer as output layer
         self.layers
             .push(Layer::new(neuron_count, self.num_outputs, act));
 
         // modify previous layer output_len to match neuron_count of new layer
-        let old_input_len = self.layers[last].input_len;
-        let old_activation = self.layers[last].activation;
-        self.layers[last] = Layer::new(old_input_len, neuron_count, old_activation);
+        let old_input_len = self.layers[last_layer_idx].input_len;
+        let old_activation = self.layers[last_layer_idx].activation;
+        self.layers[last_layer_idx] = Layer::new(old_input_len, neuron_count, old_activation);
+
+        // re-compute num_genes
+        self.num_genes = self.layers.iter().map(|l| l.num_genes()).sum();
     }
 
-    // forward the inputs through the network
+    /// forward the inputs through the network
+    /// Returns an output of length self.num_outputs
     pub fn forward(&mut self, inputs: Vec<f64>) -> Vec<f64> {
         let mut prev_output = Matrix::new(self.num_inputs, 1, inputs);
         for l in 0..self.layers.len() {
@@ -44,12 +56,12 @@ impl ANN {
         return prev_output.into_vec();
     }
 
-    pub fn enc_fitness(&mut self, _fit: f64) -> Vec<f64> {
-        // TODO: enc_fitness
-        vec![1.0; self.genes().len()]
+    /// Return the number of genes in the network
+    pub fn num_genes(&self) -> usize {
+        self.num_genes
     }
 
-    // returns the genes representing the network
+    /// returns the genes representing the network
     pub fn genes(&self) -> Vec<f64> {
         let mut out: Vec<f64> = Vec::new();
         for l in &self.layers {
@@ -58,26 +70,8 @@ impl ANN {
         out
     }
 
-    /// Return the number of genes in the network
-    pub fn num_genes(&self) -> usize {
-        self.layers.iter().map(|l| l.num_genes()).sum()
-    }
-
-    // randomize returns a new randomized instance of ANN
-    pub fn randomize(&self) -> ANN {
-        let mut layers: Vec<Layer> = Vec::new();
-        for l in &self.layers {
-            layers.push(Layer::new(l.input_len, l.output_len, l.activation))
-        }
-        return ANN {
-            num_inputs: self.num_inputs,
-            num_outputs: self.num_outputs,
-            layers,
-        };
-    }
-
-    // update the network weights and biases with new genes
-    pub fn set_genes(&mut self, genes: &Vec<f64>) {
+    /// update the network weights and biases with new genes
+    pub(crate) fn set_genes(&mut self, genes: &Vec<f64>) {
         assert_eq!(genes.len(), self.num_genes());
 
         let mut start: usize = 0;
@@ -86,6 +80,21 @@ impl ANN {
             l.set_genes(&genes[start..end].to_vec());
             start += l.gene_len;
         }
+    }
+
+    /// randomize returns a new randomized instance of ANN
+    pub(crate) fn randomize(&self) -> ANN {
+        let mut layers: Vec<Layer> = Vec::new();
+        for l in &self.layers {
+            layers.push(Layer::new(l.input_len, l.output_len, l.activation))
+        }
+        let num_genes = layers.iter().map(|l| l.num_genes()).sum();
+        return ANN {
+            num_inputs: self.num_inputs,
+            num_outputs: self.num_outputs,
+            layers,
+            num_genes,
+        };
     }
 }
 
