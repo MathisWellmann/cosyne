@@ -3,7 +3,25 @@ name = "cosyne"
 version = "0.3.2"
 authors = ["MathisWellmann <wellmannmathis@gmail.com>"]
 edition = "2018"
-
+license-file = "LICENSE"
+description = "CoSyNE - neuro evolution through cooperatively coevolved synapses"
+readme = "README.md"
+keyworkds = [
+    "evolution",
+    "network",
+    "neural",
+    "neuro-evolution",
+    "ai"
+]
+categories = [
+    "simulation",
+    "science",
+    "algorithms",
+]
+exclude = [
+    "img/",
+    "resources",
+]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
