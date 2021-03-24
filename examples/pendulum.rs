@@ -6,20 +6,20 @@ fn main() {
     pretty_env_logger::init();
 
     let config = Config{
-        pop_size: 250,
+        pop_size: 100,
         top_ratio_to_recombine: 0.25,
-        mutation_prob: 0.1,
+        mutation_prob: 0.2,
         mutation_strength: 1.0,
         perturb_prob: 0.5,
         permutation_prob_f: PermutationProbF::Relative,
     };
     let env = Box::new(PendulumEvaluator {});
     let mut nn = ANN::new(3, 1, Activation::Relu);
-    nn.add_layer(3, Activation::Relu);
+    nn.add_layer(5, Activation::Relu);
     nn.add_layer(3, Activation::Relu);
     let mut cosyne = Cosyne::new(env, nn, config);
     let t0 = Instant::now();
-    for _ in 0..250 {
+    for _ in 0..1000 {
         cosyne.evolve();
     }
     let champion = cosyne.champion();
@@ -49,7 +49,7 @@ impl Environment for PendulumEvaluator {
                 break;
             }
             let output = nn.forward(state);
-            let action = ActionType::Continuous(vec![output[0] * 2.0]);
+            let action = ActionType::Continuous(vec![output[0] * 4.0 - 2.0]);
             let (s, reward, done, _info) = env.step(action);
             end = done;
             state = s;
@@ -77,7 +77,7 @@ fn render_champion(champion: &mut ANN) {
             break;
         }
         let output = champion.forward(state);
-        let action = ActionType::Continuous(vec![output[0] * 3.0]);
+        let action = ActionType::Continuous(vec![output[0] * 4.0 - 2.0]);
         let (s, _reward, done, _info) = env.step(action);
         end = done;
         state = s;

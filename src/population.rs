@@ -1,8 +1,8 @@
 use crate::{Config, Environment, ANN};
 use rand::{thread_rng, Rng};
-use rand_distr::{Normal, Uniform};
+use rand_distr::{Normal, Uniform, Distribution};
 
-pub(crate) const DEFAULT_FIT: f64 = std::f64::MIN;
+pub(crate) const DEFAULT_FIT: f64 = 0.0;
 
 pub struct Population {
     config: Config,
@@ -142,23 +142,25 @@ impl Population {
     /// Perform crossover mutation operator on offspring population,
     fn crossover(&mut self, o: &mut Vec<Vec<(f64, f64)>>) {
         // create vec of deranged indices, not sure if actually good but should be good enough
+        let deranged = random_derangement(o.len());
+
         let mut rng = thread_rng();
-        let d = Uniform::new(0, o.len());
-        let mut deranged: Vec<usize> = vec![];
-        for i in 0..o.len() {
-            let idx: usize = rng.sample(d);
-            if i != idx {
-                deranged.push(idx);
-            } else {
-                deranged.push((idx + 1) % o.len());
-            }
-        }
-
-        let d = Uniform::new(0, self.n);
+        let d = Normal::new(self.n as f64 / 2.0, self.n as f64 * 0.33).unwrap();
         for (p1, p2) in (0..o.len()).zip(&deranged) {
-            // TODO: different user defined crossover methods
-            let crossover_point: usize = rng.sample(d);
 
+            // TODO: different user defined crossover methods
+
+            let cross_p: f64 = d.sample(&mut rng);
+            // clip to min and max
+            let crossover_point: usize = if cross_p < 0.0 {
+                0
+            } else if cross_p > self.n as f64{
+                self.n
+            } else {
+                cross_p.round() as usize
+            };
+
+            // perform single point crossover
             for i in 0..crossover_point {
                 // switch chromosomes and fitness between parent 1 and 2
                 let old_p1_vals = self.sub_populations[p1][i];
@@ -175,13 +177,14 @@ impl Population {
         let d = Normal::new(0.0, 0.4).unwrap();
         let mut rng = rand::thread_rng();
 
-        o.iter_mut().flatten().for_each(|(v, _f)| {
+        o.iter_mut().flatten().for_each(|(v, f)| {
             if rng.gen::<f64>() < self.config.mutation_prob {
                 if rng.gen::<f64>() < self.config.perturb_prob {
                     *v += rng.sample(d) * self.config.mutation_strength;
                 } else {
-                    *v = rng.gen::<f64>() * self.config.mutation_strength;
+                    *v = (rng.gen::<f64>() * 2.0 - 1.0) * self.config.mutation_strength;
                 }
+                *f = DEFAULT_FIT;
             }
         });
     }
@@ -239,5 +242,41 @@ impl Population {
             }
             self.sub_populations[marked[0]][i] = temp;
         }
+    }
+}
+
+/// Create random permutations without fixed points a.k.a. derangement
+fn random_derangement(length: usize) -> Vec<usize> {
+    let mut rng = thread_rng();
+
+    'l: loop {
+        let mut v: Vec<usize> = (0..length).collect();
+        for j in (1..length).rev() {
+            let d = Uniform::new(0, j);
+            let p = rng.sample(d);
+            if v[j] == p {
+                continue 'l
+            } else {
+                // swap
+                let old = v[j];
+                v[j] = v[p];
+                v[p] = old;
+            }
+        }
+        return v
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_random_derangement() {
+        let length: usize = 10;
+        let d = random_derangement(length);
+        println!("d: {:?}", d);
+        assert_eq!(d.len(), length);
+        assert!(!d.iter().zip((0..length)).any(|(d, i)| *d == i));
     }
 }

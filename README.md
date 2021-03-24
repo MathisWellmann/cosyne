@@ -5,9 +5,12 @@ Cooperative Synapse Neuro Evolution in Rust
 
 ![cart_pole_champion](img/cart_pole_champion.gif)
 
-Run cart_pole example like this:
+![pendulum_champion](img/pendulum_champion.gif)
+
+Run examples like this:
 ```shell
-cargo run --example cart_pole --release --features="gym-rs plot"
+RUST_LOG=info cargo run --example cart_pole --release --features="gym-rs plot"
+RUST_LOG=info cargo run --example pendulum --release --features="gym-rs plot"
 ```
 
 ### Features:
@@ -31,14 +34,27 @@ cargo run --example cart_pole --release --features="gym-rs plot"
 To use this crate in your project, add the following to your Cargo.toml:
 ```toml
 [dependencies]
-cosyne = "0.3.1"
+cosyne = "0.3.2"
 ```
 
 ### Network Topology Creation
-// TODO
+To create a user defined neural network topology, use ANN struct as such:
+```rust
+let num_input = 3;
+let num_outputs = 1;
+let mut nn = ANN::new(num_input, num_output, Activation::Relu);
+nn.add_layer(5, Activation::Relu);
+nn.add_layer(3, Activation::Relu);
+```
 
 ### Plot feature
-// TODO:
+Enable the plot feature by passing --features="plot"
+or in your Cargo.toml
+```toml
+cosyne = { version = "0.3.2", features="plot" }
+```
+
+![pendulum_fitness_history](img/pendulum_fitness_history.png)
 
 ## TODOS:
 - user defined crossover type (multipoint vs singlepoint)
@@ -49,6 +65,7 @@ cosyne = "0.3.1"
 - allow for recurrent weights
 - Expose mutation distribution to config
 - safeguard public config fields with setter and assertions
+- plot the ANN
 
 ### Donations :moneybag: :money_with_wings:
 I you would like to support the development of this crate, feel free to send over a donation:
