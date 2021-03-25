@@ -34,7 +34,7 @@ RUST_LOG=info cargo run --example pendulum --release --features="gym-rs plot"
 To use this crate in your project, add the following to your Cargo.toml:
 ```toml
 [dependencies]
-cosyne = "0.3.2"
+cosyne = "0.3.3"
 ```
 
 ### Network Topology Creation

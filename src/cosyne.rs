@@ -2,13 +2,16 @@ use crate::{Config, Environment, Population, ANN};
 
 #[cfg(feature = "plot")]
 use {crate::plot_values, failure::Error};
+use crate::population::DEFAULT_FIT;
 
 /// The main optimization struct
 pub struct Cosyne {
+    config: Config,
     env: Box<dyn Environment>,
     pop: Population,
     generation: usize,
     champion_fit_history: Vec<f64>,
+    champion: (ANN, f64),   // network with fitness
 }
 
 impl Cosyne {
@@ -36,17 +39,35 @@ impl Cosyne {
     /// Create a new CoSyNE optimizer with a given environment, neural network and config
     pub fn new(env: Box<dyn Environment>, nn: ANN, config: Config) -> Self {
         let pop = Population::new(config.clone(), &nn);
+        let champion = (pop.get_network(0), DEFAULT_FIT);
         Self {
+            config,
             env,
             pop,
             generation: 0,
             champion_fit_history: vec![],
+            champion,
         }
     }
 
     /// Perform an evolutionary step
     pub fn evolve(&mut self) {
-        self.pop.evolve(&self.env);
+        // evaluate entire population
+        let mut fits: Vec<f64> = Vec::with_capacity(self.config.pop_size);
+        for j in 0..self.config.pop_size {
+            // get the genes of network chromosome
+            let mut net = self.pop.get_network(j);
+            // evaluate the fitness in environment
+            let fit = self.env.evaluate(&mut net);
+            fits.push(fit);
+            if fit > self.champion.1 {
+                // save the champion with fitness
+                self.champion = (net.clone(), fit);
+            }
+        }
+        self.pop.update_fitnesses(&fits);
+
+        self.pop.evolve();
         self.champion_fit_history.push(self.champion().1);
 
         info!(
@@ -59,7 +80,7 @@ impl Cosyne {
 
     /// Get the current champion and its fitness
     pub fn champion(&self) -> &(ANN, f64) {
-        &self.pop.champion()
+        &self.champion
     }
 
     #[cfg(feature = "plot")]

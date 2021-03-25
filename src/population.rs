@@ -1,9 +1,10 @@
-use crate::{Config, Environment, ANN};
+use crate::{Config, ANN};
 use rand::{thread_rng, Rng};
 use rand_distr::{Normal, Uniform, Distribution};
 
-pub(crate) const DEFAULT_FIT: f64 = 0.0;
+pub(crate) const DEFAULT_FIT: f64 = std::f64::MIN;
 
+/// stores all sub-populations and their fitness values
 pub struct Population {
     config: Config,
     network_topology: ANN,
@@ -17,8 +18,6 @@ pub struct Population {
     // m sub-genotypes or population size,
     // so for each weight (or bias) in the nn topology there are m different weight (or bias) variations
     m: usize,
-    // Network with fitness
-    champion: (ANN, f64),
     current_generation: usize,
 }
 
@@ -41,13 +40,26 @@ impl Population {
         self.config.perturb_prob = pp;
     }
 
-    /// Return a reference to current champion in population
-    pub(crate) fn champion(&self) -> &(ANN, f64) {
-        &self.champion
+    /// Return a neural network at index j
+    pub fn get_network(&self, j: usize) -> ANN {
+        let genes: Vec<f64> = self.sub_populations[j].iter()
+            .map(|(v, _f)| *v)
+            .collect();
+        let mut nn = self.network_topology.clone();
+        nn.set_genes(&genes);
+
+        nn
+    }
+
+    /// Return the fitness of a given network
+    pub fn get_network_fitness(&self, j: usize) -> f64 {
+        self.sub_populations[j].iter()
+            .map(|(_, f)| *f)
+            .sum()
     }
 
     /// Create a new population with a given config and network
-    pub(crate) fn new(config: Config, nn: &ANN) -> Population {
+    pub fn new(config: Config, nn: &ANN) -> Population {
         let n: usize = nn.num_genes();
         let m: usize = config.pop_size;
 
@@ -67,38 +79,20 @@ impl Population {
             sub_populations,
             n,
             m,
-            champion: (nn.clone(), std::f64::MIN),
             current_generation: 0,
         };
     }
 
     /// Perform a single generational evolutionary step in a given environment
-    pub(crate) fn evolve(&mut self, env: &Box<dyn Environment>) {
-        // evaluate entire population
-        let mut fits: Vec<f64> = Vec::with_capacity(self.m);
-        for j in 0..self.m {
-            // get the genes of network chromosome
-            let chromosome: &Vec<(f64, f64)> = &self.sub_populations[j];
-            let genes: Vec<f64> = chromosome.iter().map(|(v, _)| *v).collect();
-            // transform chromosome onto network topology
-            self.network_topology.set_genes(&genes);
-            // evaluate the fitness in environment
-            let fit = env.evaluate(&mut self.network_topology);
-            fits.push(fit);
-            if fit > self.champion.1 {
-                // save the champion with fitness
-                self.champion = (self.network_topology.clone(), fit);
-            }
-        }
-        self.update_fitnesses(&fits);
-
+    /// assumes all network have been evaluated and their fitness updated
+    pub fn evolve(&mut self) {
         let offspring = self.spawn_offspring();
 
         self.replace_and_permute(&offspring);
     }
 
     /// Update existing chromosome fitnesses with the new network fits
-    fn update_fitnesses(&mut self, new_fits: &Vec<f64>) {
+    pub fn update_fitnesses(&mut self, new_fits: &Vec<f64>) {
         let g: f64 = self.current_generation as f64;
         for (j, new_fit) in new_fits.iter().enumerate() {
             self.sub_populations[j].iter_mut().for_each(|(_, old_fit)| {
@@ -277,6 +271,6 @@ mod tests {
         let d = random_derangement(length);
         println!("d: {:?}", d);
         assert_eq!(d.len(), length);
-        assert!(!d.iter().zip((0..length)).any(|(d, i)| *d == i));
+        assert!(!d.iter().zip(0..length).any(|(d, i)| *d == i));
     }
 }

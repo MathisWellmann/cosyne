@@ -22,9 +22,9 @@ pub use activation::Activation;
 pub use config::Config;
 pub use network::ANN;
 pub use permutation_prob_f::PermutationProbF;
+pub use population::Population;
 
 pub(crate) use layer::Layer;
-pub(crate) use population::Population;
 
 #[cfg(feature = "plot")]
 pub(crate) use plot::plot_values;
