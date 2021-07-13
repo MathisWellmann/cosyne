@@ -54,7 +54,9 @@ impl Layer {
 
     /// Forward values through one layer
     pub(crate) fn forward(&mut self, m: &Matrix<f64>) -> Matrix<f64> {
+        println!("\n\nFORWARD CALLED");
         let net = &self.weights * m + &self.biases;
+        println!("\n--NET--{:?}---\n", net);
         net.apply(&self.act_func)
     }
 
@@ -106,12 +108,21 @@ mod tests {
     #[test]
     fn layer_forward1() {
         let mut l = Layer::new(3, 1, Activation::Relu);
+        println!("\n\n--L--{:?}---\n", l.weights);
         let w = Matrix::new(1, 3, vec![0.2, 0.4, 0.8]);
+        println!("\n\n--W--{:?}---\n", w);
         l.set_weights(w);
+        println!("\n\n--L--{:?}---\n", l.weights);
         let b = Matrix::new(1, 1, vec![0.0]);
+        println!("\n\n--B--{:?}---\n", b);
+        println!("\n\n--L-before-{:?}---\n", l.biases);
         l.set_biases(b);
+        println!("\n\n--L-after-{:?}---\n", l.biases);
+
         let input = Matrix::new(3, 1, vec![0.2, 0.4, 0.8]);
         let output = l.forward(&input);
+
+        println!("\n\n--OUTPUT--{:?}---\n\n", output);
 
         assert_eq!(output.cols(), 1);
         assert_eq!(output.rows(), 1);
