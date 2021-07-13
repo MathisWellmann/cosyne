@@ -55,6 +55,7 @@ impl Layer {
     /// Forward values through one layer
     pub(crate) fn forward(&mut self, m: &Matrix<f64>) -> Matrix<f64> {
         println!("\n\nFORWARD CALLED");
+        println!("\n--{:?}---\n", self);
         let net = &self.weights * m + &self.biases;
         println!("\n--NET--{:?}---\n", net);
         net.apply(&self.act_func)
