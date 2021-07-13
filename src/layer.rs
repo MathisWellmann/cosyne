@@ -135,15 +135,19 @@ mod tests {
     #[test]
     fn layer_forward2() {
         let mut l = Layer::new(3, 3, Activation::Relu);
+        println!("\n\n--L--{:?}---\n", l);
         let w = NewMatrix::from_shape_vec((3, 3), vec![1.0; 9]).unwrap();
+        println!("\n\n--W2--{:?}---\n", w);
         l.set_weights(w);
+        println!("\n\n--L--{:?}---\n", l.weights);
         let b = NewMatrix::from_shape_vec((3, 1), vec![0.0; 3]).unwrap();
         l.set_biases(b);
+        println!("\n\n--L2--{:?}---\n", l);
 
         let input = NewMatrix::from_shape_vec((3, 1), vec![1.0; 3]).unwrap();
         let output = l.forward(&input);
 
-        println!("output: {:?}", output.row(0));
+        println!("\n--output: {:?}", output);
         assert_eq!(output, NewMatrix::from_shape_vec((3, 1), vec![3.0, 3.0, 3.0]).unwrap());
     }
 
