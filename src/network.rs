@@ -1,4 +1,4 @@
-use rulinalg::matrix::Matrix;
+use na::DMatrix as Matrix;
 
 use crate::{Activation, Layer};
 
@@ -48,12 +48,12 @@ impl ANN {
     /// forward the inputs through the network
     /// Returns an output of length self.num_outputs
     pub fn forward(&mut self, inputs: Vec<f64>) -> Vec<f64> {
-        let mut prev_output = Matrix::new(self.num_inputs, 1, inputs);
+        let mut prev_output = Matrix::from_vec(self.num_inputs, 1, inputs);
         for l in 0..self.layers.len() {
             prev_output = self.layers[l].forward(&prev_output);
         }
 
-        return prev_output.into_vec();
+        return prev_output.as_slice().into();
     }
 
     /// Return the number of genes in the network
@@ -101,7 +101,6 @@ impl ANN {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rulinalg::matrix::Matrix;
 
     #[test]
     fn network_new() {
@@ -124,15 +123,18 @@ mod tests {
         let mut nn = ANN::new(3, 1, Activation::Relu);
 
         // set weights and biases for input layer
-        let w: Matrix<f64> = Matrix::new(1, 3, vec![1.0; 3]);
+        let w: Matrix<f64> = Matrix::from_vec(1, 3, vec![1.0; 3]);
         nn.layers[0].set_weights(w);
-        let b: Matrix<f64> = Matrix::new(1, 1, vec![1.0]);
+        let b: Matrix<f64> = Matrix::from_vec(1, 1, vec![1.0]);
         nn.layers[0].set_biases(b);
 
         let input = vec![1.0; 3];
         let output = nn.forward(input);
 
-        assert_eq!(Matrix::new(1, 1, output), Matrix::new(1, 1, vec![4.0]));
+        assert_eq!(
+            Matrix::from_vec(1, 1, output),
+            Matrix::from_vec(1, 1, vec![4.0])
+        );
     }
 
     #[test]
@@ -142,21 +144,24 @@ mod tests {
         nn.add_layer(3, Activation::Relu);
 
         // set weights and biases of input layer
-        let w: Matrix<f64> = Matrix::new(3, 3, vec![1.0; 9]);
+        let w: Matrix<f64> = Matrix::from_vec(3, 3, vec![1.0; 9]);
         nn.layers[0].set_weights(w);
-        let b: Matrix<f64> = Matrix::new(3, 1, vec![0.0; 3]);
+        let b: Matrix<f64> = Matrix::from_vec(3, 1, vec![0.0; 3]);
         nn.layers[0].set_biases(b);
 
         // set weights and biases for hidden layer
-        let w: Matrix<f64> = Matrix::new(1, 3, vec![1.0; 3]);
+        let w: Matrix<f64> = Matrix::from_vec(1, 3, vec![1.0; 3]);
         nn.layers[1].set_weights(w);
-        let b: Matrix<f64> = Matrix::new(1, 1, vec![0.0]);
+        let b: Matrix<f64> = Matrix::from_vec(1, 1, vec![0.0]);
         nn.layers[1].set_biases(b);
 
         let input = vec![1.0; 3];
         let output = nn.forward(input);
 
-        assert_eq!(Matrix::new(1, 1, output), Matrix::new(1, 1, vec![9.0]));
+        assert_eq!(
+            Matrix::from_vec(1, 1, output),
+            Matrix::from_vec(1, 1, vec![9.0])
+        );
     }
 
     #[test]

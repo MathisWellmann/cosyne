@@ -11,11 +11,7 @@ pub enum PermutationProbF {
 impl PermutationProbF {
     /// Return the probability that a weight is marked for permutation
     /// given the sub-population fitnesses
-    pub(crate) fn get_probability(
-        &self,
-        subpopulation_fits: &Vec<f64>,
-        weight_fit: f64,
-    ) -> f64 {
+    pub(crate) fn get_probability(&self, subpopulation_fits: &Vec<f64>, weight_fit: f64) -> f64 {
         match self {
             PermutationProbF::Uniform(p) => *p,
             PermutationProbF::Relative => {

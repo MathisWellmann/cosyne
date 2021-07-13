@@ -1,6 +1,6 @@
 use crate::{Config, ANN};
 use rand::{thread_rng, Rng};
-use rand_distr::{Normal, Uniform, Distribution};
+use rand_distr::{Distribution, Normal, Uniform};
 
 pub(crate) const DEFAULT_FIT: f64 = std::f64::MIN;
 
@@ -42,9 +42,7 @@ impl Population {
 
     /// Return a neural network at index j
     pub fn get_network(&self, j: usize) -> ANN {
-        let genes: Vec<f64> = self.sub_populations[j].iter()
-            .map(|(v, _f)| *v)
-            .collect();
+        let genes: Vec<f64> = self.sub_populations[j].iter().map(|(v, _f)| *v).collect();
         let mut nn = self.network_topology.clone();
         nn.set_genes(&genes);
 
@@ -53,9 +51,7 @@ impl Population {
 
     /// Return the fitness of a given network
     pub fn get_network_fitness(&self, j: usize) -> f64 {
-        self.sub_populations[j].iter()
-            .map(|(_, f)| *f)
-            .sum()
+        self.sub_populations[j].iter().map(|(_, f)| *f).sum()
     }
 
     /// Create a new population with a given config and network
@@ -141,14 +137,13 @@ impl Population {
         let mut rng = thread_rng();
         let d = Normal::new(self.n as f64 / 2.0, self.n as f64 * 0.33).unwrap();
         for (p1, p2) in (0..o.len()).zip(&deranged) {
-
             // TODO: different user defined crossover methods
 
             let cross_p: f64 = d.sample(&mut rng);
             // clip to min and max
             let crossover_point: usize = if cross_p < 0.0 {
                 0
-            } else if cross_p > self.n as f64{
+            } else if cross_p > self.n as f64 {
                 self.n
             } else {
                 cross_p.round() as usize
@@ -249,7 +244,7 @@ fn random_derangement(length: usize) -> Vec<usize> {
             let d = Uniform::new(0, j);
             let p = rng.sample(d);
             if v[j] == p {
-                continue 'l
+                continue 'l;
             } else {
                 // swap
                 let old = v[j];
@@ -257,7 +252,7 @@ fn random_derangement(length: usize) -> Vec<usize> {
                 v[p] = old;
             }
         }
-        return v
+        return v;
     }
 }
 
