@@ -56,9 +56,10 @@ impl Layer {
     /// Forward values through one layer
     pub(crate) fn forward(&mut self, m: &Matrix<f64>) -> Matrix<f64> {
         println!("\n\nFORWARD CALLED");
-        println!("\n--{:?}---\n", self);
+        //println!("\n--{:?}---\n", self);
+        println!("\n--&self.weights * m--{:?}---\n", &self.weights * m);
         let net = &self.weights * m + &self.biases;
-        println!("\n--NET--{:?}---\n", net);
+        //println!("\n--NET--{:?}---\n", net);
         //net.apply(&self.act_func)
         net.map(|x| (&self.act_func)(*x))
     }
@@ -141,6 +142,7 @@ mod tests {
         l.set_weights(w);
         println!("\n\n--L--{:?}---\n", l.weights);
         let b = NewMatrix::from_shape_vec((3, 1), vec![0.0; 3]).unwrap();
+        println!("\n\n--B--{:?}---\n", b);
         l.set_biases(b);
         println!("\n\n--L2--{:?}---\n", l);
 
