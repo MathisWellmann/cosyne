@@ -1,5 +1,6 @@
 use rand::{thread_rng, Rng};
-use rulinalg::matrix::{BaseMatrix, BaseMatrixMut, Matrix};
+
+use ndarray::{Array as NewMatrix, Array2 as Matrix};
 
 use crate::Activation;
 
@@ -19,12 +20,12 @@ pub struct Layer {
 impl Layer {
     /// Create a new Layer with given input and output length and random weight and biases
     pub fn new(input_len: usize, output_len: usize, activation: Activation) -> Self {
-        let weights = Matrix::new(
-            output_len,
-            input_len,
+        let weights = NewMatrix::from_shape_vec(
+            (output_len,
+            input_len),
             rand_vec_uniform(input_len * output_len),
-        );
-        let biases = Matrix::new(output_len, 1, rand_vec_uniform(output_len));
+        ).unwrap();
+        let biases = NewMatrix::from_shape_vec((output_len, 1), rand_vec_uniform(output_len)).unwrap();
         let act_func = activation.get_func();
         Self {
             input_len,
@@ -33,23 +34,23 @@ impl Layer {
             gene_len: output_len * input_len + output_len,
             weights,
             biases,
-            act: Matrix::new(input_len, 1, vec![0.0; input_len]),
+            act: NewMatrix::from_shape_vec((input_len, 1), vec![0.0; input_len]).unwrap(),
             act_func,
-            net: Matrix::new(output_len, 1, vec![0.0; output_len]),
+            net: NewMatrix::from_shape_vec((output_len, 1), vec![0.0; output_len]).unwrap(),
         }
     }
 
     /// map the weight and biases in Matrices to flat vector
     pub fn genes(&self) -> Vec<f64> {
         let mut out: Vec<f64> = Vec::new();
-        out.append(&mut self.weights.clone().into_vec());
-        out.append(&mut self.biases.clone().into_vec());
+        out.append(&mut self.weights.clone().into_raw_vec());
+        out.append(&mut self.biases.clone().into_raw_vec());
         out
     }
 
     /// Return the number of genes in this layer
     pub fn num_genes(&self) -> usize {
-        self.weights.data().len() + self.biases.data().len()
+        self.weights.len() + self.biases.len()
     }
 
     /// Forward values through one layer
@@ -58,20 +59,21 @@ impl Layer {
         println!("\n--{:?}---\n", self);
         let net = &self.weights * m + &self.biases;
         println!("\n--NET--{:?}---\n", net);
-        net.apply(&self.act_func)
+        //net.apply(&self.act_func)
+        net.map(|x| (&self.act_func)(*x))
     }
 
     /// Set the weights for the layer
     pub(crate) fn set_weights(&mut self, w: Matrix<f64>) {
-        assert_eq!(self.weights.rows(), w.rows());
-        assert_eq!(self.weights.cols(), w.cols());
+        assert_eq!(self.weights.nrows(), w.nrows());
+        assert_eq!(self.weights.ncols(), w.ncols());
         self.weights = w;
     }
 
     /// Set the biases for the layer
     pub(crate) fn set_biases(&mut self, b: Matrix<f64>) {
-        assert_eq!(self.biases.rows(), b.rows());
-        assert_eq!(self.biases.cols(), b.cols());
+        assert_eq!(self.biases.nrows(), b.nrows());
+        assert_eq!(self.biases.ncols(), b.ncols());
         self.biases = b;
     }
 
@@ -80,9 +82,9 @@ impl Layer {
     pub fn set_genes(&mut self, genes: &Vec<f64>) {
         let w_end = self.output_len * self.input_len;
         let weights: Matrix<f64> =
-            Matrix::new(self.output_len, self.input_len, genes[..w_end].to_vec());
+        NewMatrix::from_shape_vec((self.output_len, self.input_len), genes[..w_end].to_vec()).unwrap();
         self.set_weights(weights);
-        let biases: Matrix<f64> = Matrix::new(self.output_len, 1, genes[w_end..].to_vec());
+        let biases: Matrix<f64> = NewMatrix::from_shape_vec((self.output_len, 1), genes[w_end..].to_vec()).unwrap();
         self.set_biases(biases);
     }
 }
@@ -110,46 +112,46 @@ mod tests {
     fn layer_forward1() {
         let mut l = Layer::new(3, 1, Activation::Relu);
         println!("\n\n--L--{:?}---\n", l.weights);
-        let w = Matrix::new(1, 3, vec![0.2, 0.4, 0.8]);
+        let w = NewMatrix::from_shape_vec((1, 3), vec![0.2, 0.4, 0.8]).unwrap();
         println!("\n\n--W--{:?}---\n", w);
         l.set_weights(w);
         println!("\n\n--L--{:?}---\n", l.weights);
-        let b = Matrix::new(1, 1, vec![0.0]);
+        let b = NewMatrix::from_shape_vec((1, 1), vec![0.0]).unwrap();
         println!("\n\n--B--{:?}---\n", b);
         println!("\n\n--L-before-{:?}---\n", l.biases);
         l.set_biases(b);
         println!("\n\n--L-after-{:?}---\n", l.biases);
 
-        let input = Matrix::new(3, 1, vec![0.2, 0.4, 0.8]);
+        let input = NewMatrix::from_shape_vec((3, 1), vec![0.2, 0.4, 0.8]).unwrap();
         let output = l.forward(&input);
 
         println!("\n\n--OUTPUT--{:?}---\n\n", output);
 
-        assert_eq!(output.cols(), 1);
-        assert_eq!(output.rows(), 1);
+        assert_eq!(output.ncols(), 1);
+        assert_eq!(output.nrows(), 1);
         assert_eq!(round(output.row(0)[0], 2), 0.84);
     }
 
     #[test]
     fn layer_forward2() {
         let mut l = Layer::new(3, 3, Activation::Relu);
-        let w = Matrix::new(3, 3, vec![1.0; 9]);
+        let w = NewMatrix::from_shape_vec((3, 3), vec![1.0; 9]).unwrap();
         l.set_weights(w);
-        let b = Matrix::new(3, 1, vec![0.0; 3]);
+        let b = NewMatrix::from_shape_vec((3, 1), vec![0.0; 3]).unwrap();
         l.set_biases(b);
 
-        let input = Matrix::new(3, 1, vec![1.0; 3]);
+        let input = NewMatrix::from_shape_vec((3, 1), vec![1.0; 3]).unwrap();
         let output = l.forward(&input);
 
         println!("output: {:?}", output.row(0));
-        assert_eq!(output, Matrix::new(3, 1, vec![3.0, 3.0, 3.0]));
+        assert_eq!(output, NewMatrix::from_shape_vec((3, 1), vec![3.0, 3.0, 3.0]).unwrap());
     }
 
     #[test]
     fn layer_set_weights1() {
         let mut l = Layer::new(3, 1, Activation::Relu);
 
-        let w: Matrix<f64> = Matrix::new(1, 3, vec![1.0; 3]);
+        let w: Matrix<f64> = NewMatrix::from_shape_vec((1, 3), vec![1.0; 3]).unwrap();
         l.set_weights(w);
     }
 
@@ -158,7 +160,7 @@ mod tests {
     fn layer_set_weights2() {
         let mut l = Layer::new(3, 1, Activation::Relu);
 
-        let w: Matrix<f64> = Matrix::new(3, 4, vec![1.0; 3]);
+        let w: Matrix<f64> = NewMatrix::from_shape_vec((3, 4), vec![1.0; 3]).unwrap();
         l.set_weights(w);
     }
 
@@ -166,7 +168,7 @@ mod tests {
     fn layer_set_biases() {
         let mut l = Layer::new(3, 1, Activation::Relu);
 
-        let b: Matrix<f64> = Matrix::new(1, 1, vec![0.0]);
+        let b: Matrix<f64> = NewMatrix::from_shape_vec((1, 1), vec![0.0]).unwrap();
         l.set_biases(b);
     }
 

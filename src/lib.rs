@@ -9,29 +9,29 @@ extern crate pretty_env_logger;
 
 mod activation;
 mod config;
-mod cosyne;
+// mod cosyne;
 mod layer;
-mod network;
+// mod network;
 mod permutation_prob_f;
 #[cfg(feature = "plot")]
 mod plot;
-mod population;
+// mod population;
 
-pub use crate::cosyne::Cosyne;
+// pub use crate::cosyne::Cosyne;
 pub use activation::Activation;
 pub use config::Config;
-pub use network::ANN;
+// pub use network::ANN;
 pub use permutation_prob_f::PermutationProbF;
-pub use population::Population;
+// pub use population::Population;
 
 pub(crate) use layer::Layer;
 
 #[cfg(feature = "plot")]
 pub(crate) use plot::plot_values;
 
-/// Environment to test the neural network in
-pub trait Environment {
-    /// Return the fitness of a given neural network in the environment.
-    /// Higher values indicate a more fit candidate
-    fn evaluate(&self, nn: &mut ANN) -> f64;
-}
+// /// Environment to test the neural network in
+// pub trait Environment {
+//     /// Return the fitness of a given neural network in the environment.
+//     /// Higher values indicate a more fit candidate
+//     fn evaluate(&self, nn: &mut ANN) -> f64;
+// }
