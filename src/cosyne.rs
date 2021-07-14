@@ -1,8 +1,8 @@
 use crate::{Config, Environment, Population, ANN};
 
+use crate::population::DEFAULT_FIT;
 #[cfg(feature = "plot")]
 use {crate::plot_values, failure::Error};
-use crate::population::DEFAULT_FIT;
 
 /// The main optimization struct
 pub struct Cosyne {
@@ -11,7 +11,7 @@ pub struct Cosyne {
     pop: Population,
     generation: usize,
     champion_fit_history: Vec<f64>,
-    champion: (ANN, f64),   // network with fitness
+    champion: (ANN, f64), // network with fitness
 }
 
 impl Cosyne {

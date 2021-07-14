@@ -7,6 +7,8 @@
 extern crate log;
 extern crate pretty_env_logger;
 
+extern crate nalgebra as na;
+
 mod activation;
 mod config;
 mod cosyne;

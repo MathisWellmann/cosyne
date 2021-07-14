@@ -1,11 +1,11 @@
-use cosyne::{Activation, Config, Cosyne, Environment, ANN, PermutationProbF};
+use cosyne::{Activation, Config, Cosyne, Environment, PermutationProbF, ANN};
 use gym_rs::{ActionType, GifRender, GymEnv, PendulumEnv};
 use std::time::Instant;
 
 fn main() {
     pretty_env_logger::init();
 
-    let config = Config{
+    let config = Config {
         pop_size: 100,
         top_ratio_to_recombine: 0.25,
         mutation_prob: 0.2,
