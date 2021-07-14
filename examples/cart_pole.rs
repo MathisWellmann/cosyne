@@ -15,7 +15,7 @@ fn main() {
     }
     let champion = cosyne.champion();
     println!("champion: {:?}", champion);
-    println!("training time: {}ms", t0.elapsed().as_secs());
+    println!("training time: {}ms", t0.elapsed().as_millis());
     assert!(champion.1 >= 400.0);
 
     render_champion(&mut champion.0.clone());

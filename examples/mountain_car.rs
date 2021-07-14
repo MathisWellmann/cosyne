@@ -16,7 +16,7 @@ fn main() {
     }
     let champion = cosyne.champion();
     println!("champion: {:?}", champion);
-    println!("training time: {}s", t0.elapsed().as_secs());
+    println!("training time: {}ms", t0.elapsed().as_millis());
 
     let filename = "img/mountain_car_fitness_history.png";
     cosyne.plot_fitness_history(filename, (1920, 1080)).unwrap();
