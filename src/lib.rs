@@ -1,4 +1,4 @@
-#![deny(missing_docs, missing_crate_level_docs)]
+#![deny(missing_docs, rustdoc::missing_crate_level_docs)]
 
 //! CoSyNE crate for optimizing fixed topology neural network using co-evolution
 //! as described in the original paper (see resources/CoSyNE.pdf)

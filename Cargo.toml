@@ -6,28 +6,13 @@ edition = "2018"
 license-file = "LICENSE"
 description = "CoSyNE - neuro evolution through cooperatively coevolved synapses"
 readme = "README.md"
-keyworkds = [
-    "evolution",
-    "network",
-    "neural",
-    "neuro-evolution",
-    "ai"
-]
-categories = [
-    "simulation",
-    "science",
-    "algorithms",
-]
-exclude = [
-    "img/",
-    "resources",
-]
+keyworkds = ["evolution", "network", "neural", "neuro-evolution", "ai"]
+categories = ["simulation", "science", "algorithms"]
+exclude = ["img/", "resources"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-plot = [
-    "plotters"
-]
+plot = ["plotters"]
 
 [dependencies]
 rand = "0.8.3"
@@ -40,19 +25,19 @@ failure = "0.1.8"
 nalgebra = "0.28"
 
 gym-rs = { version = "0.2.1", optional = true }
-plotters = { version = "0.3.0", optional = true}
+plotters = { version = "0.3.0", optional = true }
 
 [dev-dependencies]
 round = "0.1.0"
 
 [[example]]
 name = "cart_pole"
-required-features = [ "gym-rs" ]
+required-features = ["gym-rs"]
 
 [[example]]
 name = "mountain_car"
-required-features = [ "gym-rs", "plotters" ]
+required-features = ["gym-rs", "plotters"]
 
 [[example]]
 name = "pendulum"
-required-features = [ "gym-rs", "plotters" ]
+required-features = ["gym-rs", "plotters"]

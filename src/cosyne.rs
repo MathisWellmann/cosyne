@@ -18,27 +18,27 @@ impl Cosyne {
     /// Set the mutation probability of the population
     /// panics in debug mode if mp < 0.0 || mp > 1.0
     pub fn set_mutation_prob(&mut self, mp: f64) {
-        debug_assert!(mp >= 0.0 && mp <= 1.0);
+        debug_assert!((0.0..=1.0).contains(&mp));
         self.pop.set_mutation_prob(mp);
     }
 
     /// Set the mutation strength of the population
     /// panics in debug mode if mp < 0.0 || mp > 1.0
     pub fn set_mutation_strength(&mut self, ms: f64) {
-        debug_assert!(ms >= 0.0 && ms <= 1.0);
+        debug_assert!((0.0..=1.0).contains(&ms));
         self.pop.set_mutation_strength(ms);
     }
 
     /// Set the perturb probability of the population
     /// panics in debug mode if pp < 0.0 || pp > 1.0
     pub fn set_perturb_prob(&mut self, pp: f64) {
-        debug_assert!(pp >= 0.0 && pp <= 1.0);
+        debug_assert!((0.0..=1.0).contains(&pp));
         self.pop.set_perturb_prob(pp);
     }
 
     /// Create a new CoSyNE optimizer with a given environment, neural network and config
     pub fn new(env: Box<dyn Environment>, nn: ANN, config: Config) -> Self {
-        let pop = Population::new(config.clone(), &nn);
+        let pop = Population::new(config, &nn);
         let champion = (pop.get_network(0), DEFAULT_FIT);
         Self {
             config,

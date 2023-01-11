@@ -22,6 +22,7 @@ pub enum Activation {
 
 impl Activation {
     /// Return the corresponding function to the Activation
+    #[inline(always)]
     pub fn get_func(&self) -> fn(f64) -> f64 {
         match self {
             Activation::Linear => linear,
@@ -36,6 +37,7 @@ impl Activation {
     }
 
     /// parse the Activation from an int 32 value
+    #[inline(always)]
     pub fn from_i32(n: i32) -> Activation {
         match n {
             0 => Activation::Linear,
@@ -50,10 +52,12 @@ impl Activation {
     }
 }
 
+#[inline(always)]
 pub fn linear(x: f64) -> f64 {
     x
 }
 
+#[inline(always)]
 pub fn threshold(x: f64) -> f64 {
     if x > 0.0 {
         1.0
@@ -62,6 +66,7 @@ pub fn threshold(x: f64) -> f64 {
     }
 }
 
+#[inline(always)]
 pub fn sign(x: f64) -> f64 {
     if x > 0.0 {
         1.0
@@ -72,23 +77,32 @@ pub fn sign(x: f64) -> f64 {
     }
 }
 
+#[inline(always)]
 pub fn sigmoid(x: f64) -> f64 {
     1.0 / (1.0 + (-x).exp())
 }
 
+#[inline(always)]
 pub fn tanh(x: f64) -> f64 {
     x.tanh()
 }
 
+#[inline(always)]
 pub fn soft_sign(x: f64) -> f64 {
     x / (1.0 + x.abs())
 }
 
+#[inline(always)]
 pub fn bent_identity(x: f64) -> f64 {
     (((x.powi(2) + 1.0).sqrt() - 1.0) / 2.0) + x
 }
 
 /// rectified linear unit
+#[inline(always)]
 pub fn relu(x: f64) -> f64 {
-    return if x > 0.0 { x } else { 0.0 };
+    if x > 0.0 {
+        x
+    } else {
+        0.0
+    }
 }

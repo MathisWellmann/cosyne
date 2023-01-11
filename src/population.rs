@@ -69,14 +69,14 @@ impl Population {
             sub_populations.push(chromosome);
         }
 
-        return Population {
+        Population {
             config,
             network_topology: nn.clone(),
             sub_populations,
             n,
             m,
             current_generation: 0,
-        };
+        }
     }
 
     /// Perform a single generational evolutionary step in a given environment
@@ -88,7 +88,7 @@ impl Population {
     }
 
     /// Update existing chromosome fitnesses with the new network fits
-    pub fn update_fitnesses(&mut self, new_fits: &Vec<f64>) {
+    pub fn update_fitnesses(&mut self, new_fits: &[f64]) {
         let g: f64 = self.current_generation as f64;
         for (j, new_fit) in new_fits.iter().enumerate() {
             self.sub_populations[j].iter_mut().for_each(|(_, old_fit)| {
@@ -161,7 +161,7 @@ impl Population {
 
     /// Perform a mutation operator on offspring population,
     /// by either perturbing or completely replacing values
-    fn mutate(&self, o: &mut Vec<Vec<(f64, f64)>>) {
+    fn mutate(&self, o: &mut [Vec<(f64, f64)>]) {
         // TODO: user defined mutation distribution in case of pertubation
         let d = Normal::new(0.0, 0.4).unwrap();
         let mut rng = rand::thread_rng();
@@ -180,7 +180,7 @@ impl Population {
 
     /// Replace the least fit chromosome in each sub-population with newly created offspring
     /// Also permute the left over original chromosomes among each other in the sub-population
-    fn replace_and_permute(&mut self, o: &Vec<Vec<(f64, f64)>>) {
+    fn replace_and_permute(&mut self, o: &[Vec<(f64, f64)>]) {
         let mut rng = thread_rng();
         for i in 0..self.n {
             // sort the sub-population
@@ -217,17 +217,14 @@ impl Population {
                 }
             }
 
-            if marked.len() == 0 {
+            if marked.is_empty() {
                 return;
             }
 
             // permute marked by shifting among them
             let mut temp = self.sub_populations[marked[0]][i];
             for marked_idx in marked.iter().skip(1) {
-                // swap
-                let old_val = self.sub_populations[*marked_idx][i];
-                self.sub_populations[*marked_idx][i] = temp;
-                temp = old_val;
+                std::mem::swap(&mut self.sub_populations[*marked_idx][i], &mut temp);
             }
             self.sub_populations[marked[0]][i] = temp;
         }
@@ -246,10 +243,7 @@ fn random_derangement(length: usize) -> Vec<usize> {
             if v[j] == p {
                 continue 'l;
             } else {
-                // swap
-                let old = v[j];
-                v[j] = v[p];
-                v[p] = old;
+                v.swap(j, p);
             }
         }
         return v;

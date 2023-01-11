@@ -75,7 +75,7 @@ impl Layer {
 
     // set weights and biases of layer to the supplied genes
     // panics if genes.len() is wrong
-    pub fn set_genes(&mut self, genes: &Vec<f64>) {
+    pub fn set_genes(&mut self, genes: &[f64]) {
         let w_end = self.output_len * self.input_len;
         let weights: Matrix<f64> =
             Matrix::from_vec(self.output_len, self.input_len, genes[..w_end].to_vec());

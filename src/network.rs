@@ -15,16 +15,15 @@ impl ANN {
     /// Create a new artificial neural network
     /// with a given number of inputs and outputs and an activation function
     pub fn new(num_inputs: usize, num_outputs: usize, act_func: Activation) -> ANN {
-        let mut layers: Vec<Layer> = Vec::new();
-        layers.push(Layer::new(num_inputs, num_outputs, act_func.clone()));
+        let layers = vec![Layer::new(num_inputs, num_outputs, act_func)];
         let num_genes = layers.iter().map(|l| l.num_genes()).sum();
 
-        return ANN {
+        ANN {
             num_inputs,
             num_outputs,
             layers,
             num_genes,
-        };
+        }
     }
 
     /// Add a new hidden layer with a given neuron count and activation function.
@@ -77,7 +76,7 @@ impl ANN {
         let mut start: usize = 0;
         for l in &mut self.layers {
             let end = start + l.gene_len;
-            l.set_genes(&genes[start..end].to_vec());
+            l.set_genes(&genes[start..end]);
             start += l.gene_len;
         }
     }
@@ -89,12 +88,12 @@ impl ANN {
             layers.push(Layer::new(l.input_len, l.output_len, l.activation))
         }
         let num_genes = layers.iter().map(|l| l.num_genes()).sum();
-        return ANN {
+        ANN {
             num_inputs: self.num_inputs,
             num_outputs: self.num_outputs,
             layers,
             num_genes,
-        };
+        }
     }
 }
 
